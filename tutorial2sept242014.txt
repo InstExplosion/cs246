@@ -1,0 +1,105 @@
+---------------------------------
+Tutorial 2
+
+	Quotes
+	Shell Scripting
+	Testing
+	C++ I/O
+
+Double quotes - suppress globbing
+	echo "*"
+
+Single quotes - suppresses everything
+	echo '*'
+	'cat word.txt'
+
+Back quotes - running aother command, grab input from another source
+	egrep `cat word.txt` /usr/share/dict/words
+	whereas egrep '`cat word.txt`' /usr/share/dict/words  searched for string "`cat word.txt`"
+	echo "Hello `whoami`. "'Today is `date`' --> "Hello jrrideou. Today is `date`"
+
+Shell Scripts
+	$# number of args
+	$0 name of program
+	$1, $2, ... nth arg
+	$@ all args
+
+	echo "Script name: ${0}"
+	echo "First arg: ${3}"
+	n=4
+	x=n
+	echo "Fourth arg: ${!n}"
+	echo "Fourth arg: ${!4}"
+
+#!/bin/bash
+
+echo "Hello `whaomi`!"
+echo "Today is `date`"
+
+permission will be denied unless chmod, sudo
+run $ bash simple.script
+or $ chmod u+x simple.script
+
+#!/bin/bash
+
+usage(){
+	echo "ERROR" >2
+	exit 1 			# 0 means success, 1 is not
+}
+
+if [ ${#} -eq 1 ]; then
+	usage			
+elif [ ${1} -lt 1 ]; then
+	usage
+fi
+
+i=$(( ${1} - 1 ))
+total = ${1}
+while [ "${i}" -gt 1 ]; do 				# square braces must have spaces before/after []
+	total=$(( ${total} * ${i} ))
+	i=$(( ${i} - 1 ))
+done
+echo "${1} factorial is ${total}" 		# curly braces required for explicit variable name access ($total. looks for var named "total.")
+
+Testing
+
+Given a program that reads from stdin a list of integers with the goal of determining if the combination of a list of integers can sum to the last integer, (>=0)
+n, x1, ..., xn, y
+(x, ... , xn) is ascending
+Try testing:
+	"large" input
+	large volume input
+	correct solutions (a variety)
+	example solution(s)
+	edge cases (zeros, etc.)
+	target <(sum of all xi)
+	target is less than max but still attainable
+	y is odd but all x are even
+
+C++ IO
+
+Three types of streams:
+	cin (stdin)
+	cout (stdout)
+	cerr (stderr)
+
+Must #include <iostream>
+*There is also an #include <string> library
+
+	cout << "Please choose a number";
+	while (cin >> choice) {
+		// cin needs to be read at least once before it can hit eof or fail
+		if (choice > numChoices)
+			cerr << "Invalid Number" << endl;
+		else
+			cout << phrases[choice-1] << endl;
+	...
+
+***Print End of Line character at end of program to pass Marmoset tests!!!
+
+vim - can see more things than once
+	:tabedit (navigate with G,T)
+	:vsplit (side by side editing)
+		:split horizontal
+		change with CTRL-W
+	}

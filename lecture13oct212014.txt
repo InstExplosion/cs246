@@ -1,0 +1,220 @@
+-------------------------------------------------
+Lecture 13
+
+"Content up to and including this lecture will be covered on the midterm, but not the next lecture. Study all of this!" -NN
+
+More notes on copy contructors:
+    Places where a copy constructor is called:
+        When an object is constructed as a copy of another.
+        When we pass an object by value (and a copy of it is created for the function being called).
+        When we return an object from a function.
+
+    A copy constructor takes its only parameter by const reference. The other object isn't changed.
+        Note that it has to be a reference, because to pass in an object by value you must run a copy constructor! This would create an infinite loop here.
+
+Recall the four things that we get for free:
+    Default constructor
+    Default copy constructor (only does shallow copies)
+    Destructor
+    Assignment creator
+
+Destructors
+    When an object is destroyed, a method called the destructor runs.
+        A stack allocated object is destroyed when it goes out of scope.
+        A heap allocated object is destroyed when you call delete on its pointer.
+
+    A destructor:
+        Takes no arguments.
+        Has the same name as the class, prefixed with a tilde (~).
+    A class only has one destructor.
+    There is a default destructor. It automatically calls destructors on any fields which are objects.
+        Note that base types and pointers to objects don't have destructors.
+            It's important that pointers don't have destructors by default. If they are pointing to something important, we may need a custom destructor.
+                e.g.
+                    Node *np = new Node(1, new Node(2, new Node(3, NULL)));
+
+                    stack    --------- heap ---------
+
+                     np --->[1][ ]--->[2][ ]--->[3][/]
+
+                    If there is no call to delete:
+                        np, being stack allocated, is reclaimed. No destructor runs!
+                        Three nodes are leaked!
+                    If we call delete on np:
+                        Called destructor on [1][ ]--->
+                            The default destructor runs.
+                        No destructors for fields!
+                        Two nodes are leaked!
+
+                    We need a custom destructor.
+
+    Custom destructor example:
+        struct Node {
+            ...
+
+            ~Node(){
+                delete next;
+            }
+        };
+
+        Now, calling delete on np:
+            This calls delete on the next Node(s) recursively and stops appropriately when the end (NULL pointer) is encountered.
+            Note that calling "delete NULL;" won't create any error, delete is smart enough to not do anything.
+            The first part is deleted because this whole recursive delete process is started with "delete np;".
+
+"Another thing I'm squeezing in today... you can guess why." -NN ;)
+
+Recall separate compilation:
+    Interface (.h) files: type definitions and function headers.
+    Implementation (.cc) files: implementation of functions.
+
+    This approach is now problematic because we are implementing method definitions inside class declarations, so we would have implementations in header files!
+    Now we will stop implementing methods inside class definitions.
+    Instead:
+        For a class, give method headers in the .h file.
+            e.g. (.h file):
+               struct Node {
+                    ...
+                    ~Node();
+                    Node(int data, Node *next);
+                };
+
+        We will put the implentation of ~Node in a .cc file.
+            How does the compiler know that ~Node belongs to the Node class?
+                We use the scope resolution operator.
+                In the .cc file:
+
+                    Node::~Node() {
+                        std::cout << "Destructor called" << std::endl;
+                        delete next;
+                    }
+
+                    This defines ~Node in the scope of Node.
+                    "We still always need include guards in our .h files. We will lose "
+                    See /lectures/c++/8-classes/separate/
+
+                Use Node:: in .cc files.
+                    This is called the scope resolution operator.
+                    Node::getData()
+                        getData in the context (scope) of the node class.
+
+"Now, perhaps the most technical of the four methods you get by default." -NN
+"We will show two ways this is done. Study both ways as much as you can." -NN (hint hint)
+
+Assignment Operator
+    Student bobby(60, 70, 80);
+    Student billy = bobby; // copy constructor
+    Student jane; // zero-argument constructor
+    jane = bobby; // jane already exists! We are re-assigning its fields to be a copy of bobby.
+         ^assignment operator (=)
+
+    We get a default assignment operator:
+        Default "operator=" (assignment operator) does a field-for-field copy.
+        For Student, the default operator= works fine!
+
+    We must implement our own assignment operator if dynamic memory is involved.
+        struct Node {
+            ...
+            Node &operator=(const Node &other) { // other is the right hand side of the assignment
+                // The return type is a Node reference so that cascading works (we have seen this reasoning before).
+                // Remember that this is NOT a constructor.
+
+                // Default implementation (only a shallow copy):
+                //     data = other.data;
+                //     next = other.next;
+                //     return *this; // *this is the object
+
+                // To get a deep copy, we must create new Nodes.
+                data = other.data;
+                // next = new Node(*other.next); // Call to copy constructor (must already be implemented). This can cause errors if we encounter a NULL pointer.
+
+                next = other.next ? new Node(*other.next) : 0; // 0 is equivalent to typing NULL
+            }
+        }
+        "If your copy constructor and assignment operator look very similar, you have done something wrong." -NN
+        Don't overwrite the next pointer straight away, that creates a memory leak!
+
+            Node &operator=(const Node &other){
+                data = other.data;
+                delete next;
+                next = other.next ? new Node(*other.next) : NULL;
+                return *this;
+            }
+
+            This is still wrong! It breaks with self-assignment:
+
+                Node n(1, new Node(2, new Node(3, NULL)));
+                n = n;
+
+                Node &operator=(const Node &other){
+                    n.data = n.data;
+                    delete n.next;
+                    n.next = n.next ? new Node(*n.next) : NULL; // now this behaviour is undefined, since n.next has been deleted!
+                    return *this;
+                }
+
+           We must ALWAYS check for self assignment (check if other is equal to this).
+           Note that we only have this problem in the assignment operator, because we could only be referencing the same object here.
+
+            Node &operator=(const Node &other){
+                if (this == &other) return *this;
+                data = other.data;
+                delete next;
+                next = other.next ? new Node(*other.next) : NULL;
+                return *this;
+            }
+
+            For CS246, we are done. Lots of technical details here, be sure to study it.
+
+            In the industry (we don't need to know this) your code has to be more robust.
+                What happens if we run out of memory when we try creating new Node?
+                If the call to new fails, code execution stops for this method, the stack is unwound.
+                next is now a dangling pointer. It has not been set to NULL, nor does it point to anything.
+                To fix this problem, delay the delete until after the next Node is created.
+                    This is called a delayed delete:
+                        Node &operator=(const Node &other){
+                            if (this == &other) return *this;
+                            data = other.data;
+                            Node *tmp = next;
+                            next = other.next ? new Node(*other.next) : NULL;
+                            delete *tmp
+                            return *this;
+                        }
+
+                "We don't need to do delayed delete on the exam, but we must check for NULL, return *this, etc." -NN
+
+        Another, easier to understand implementation of an assignment operator:
+            Copy and Swap Idiom
+
+                struct Node{
+                    ...
+                    void swap(Node &other){ // NOT a const reference
+                        // Swap all the fields of a given object.
+
+                        int tdata = data;
+                        data = other.data;
+                        other.data = tdata;
+
+                        Node *tnext = next;
+                        next = other.next;
+                        other.next = tnext;
+                    }
+                    Node &operator=(const Node &other){
+                        Node tmp = other; // calls copy constructor
+                        swap(tmp);
+                        return *this;
+                    }
+                }
+
+                Notice that we never used delete. We assigned tmp to be a copy of other ON THE STACK.
+                Note that this requires a functioning copy constructor.
+                "Node tmp = other;" would call a deep copy constructor, so no recursion is neeed in the assignment operator.
+                Before returning *this, "this" has the needed fields, and tmp has the old fields.
+                This also relies on having a functioning destructor, because it will be called on tmp when it goes out of scope.
+
+Summary of today's lecture and yesterday's lecture:
+    Rule of 3
+        If you need to implement a custom version of the copy constructor or the destructor or the assignment operator,
+        then you usually need to implement all three.
+
+Office hours 2-4:30pm today. 10 minute limit per student if it's busy.

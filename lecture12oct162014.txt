@@ -1,0 +1,237 @@
+--------------------------------------------------
+Lecture 12
+
+Recall from last time:
+	Struct Student {
+		int assns, mt, final;
+		float grade() {
+			return assns*0.4 + mt*0.2 + final*0.4;
+		}
+	}
+
+	Student s = {80,55,70}; // c-style initialization
+	s.grade();
+
+
+Function vs Method
+	Method has an additional hidden parameter called "this".
+	"this" is a pointer to the object on which the method was called.
+
+	Inside grade,
+		this == &s
+		*this == s
+
+	In the grade() code above,
+		this->assns*0.4 +
+		this->mt*0.2 +
+		this->final*0.4;
+
+		This is equivalent to the previous example, since we don't explicitly need to use "this".
+		Sometimes it is useful to disambiguate between global variables and fields, etc.
+
+Constructors
+	Now:
+		Student billy = {90, 80, 70};
+			90, 80, 70 are compile-time constants. This is limited and unrestricted (we could give a mark >100).
+
+	It would be nice to be able to do arbitrary computation for initializing an object.
+	We can implement constructors, which are methods used to initialize objects.
+
+	Struct Student {
+		int assns, mt, final;
+		float grade() { ... };
+
+		Student(int assns, int mt, int final) { // A constructor! These must be the same name as the class, and can't specify any other return type.
+			this->assns = assns;
+			this->mt = mt;
+			this->final = final;
+		}
+	};
+
+	"this" came in handy here to differentiate between constructor arguments and the object's fields.
+	Note that we can perform computations/checks before assigning the field values.
+
+	We can call the constructor with the following (both of these are EXACTLY the same):
+		Student billy(80, 55, 70);
+		Student billy = Student(80, 55, 70);
+			
+		Both of these allocate objects on the stack.
+		If we want billy to reside on the heap:
+			Student billy = new Student(80, 55, 70);
+				The above line is incorrect. "new" always returns a pointer, not an object.
+			Fixed:
+				Student *billyPointer = new Student(80, 55, 70);
+				...
+				delete billyPointer; // "Billy is now gone. I feel like God." -NN
+
+	We have used constructors already in our code: "iStringStream ss(s)".
+
+	Advantages of Constructors:
+		(+) arbitrary computation (they are functions, so we can do anything)
+		(+) default arguments
+		(+) overloading
+
+	e.g.
+		Struct Student {
+			int assns, mt, final;
+			...
+			Student(int assns=0, int mt=0, int final=0) {
+				this->assns = assns;
+				this->mt = mt;
+				this->final = final;
+			}
+		};           // Don't forget the semicolon!
+
+		The above can take 3, 2, 1, or 0 arguments.
+			Student s(60, 70, 80);
+			Student s1(60,70); // final = 0
+			Student s2(60); // mt = final = 0
+
+		You would think you would utilize all three default arguments with the following:
+			Student s3(); // incorrect
+		But wait! That looks exactly like a declaration, and C++ would treat it as such.
+		Instead, we do:
+			Student s3; // assns = mt = final = 0
+
+	Every class comes with a default (0-argument) constructor that calls default (0-argument) constructors on fields who have constructors.
+		e.g. String class has a default (0-argument) constructor.
+		e.g. Struct Vec { int x, y; }; // also comes with a default constructor
+			 Vec v; // calls the default constructor! x and y are uninitialized though.
+
+		Base types and primitive types (e.g. int) are left uninitialized, but other objects are initialized (say, if we had a Student inside Vec).
+
+		The default constructor goes away as soon as you write a constructor of your own.
+		e.g.
+			Struct Vec {
+				int x, y;
+				Vec(int x, int y) {
+					this->x = x;
+					this->y = y;
+				}
+			};
+
+			Now, calling "Vec v;" would not compile because our default (0-argument) constructor has gone away.
+			Calling "Vec v(1, 2);" is how we need to call this constructor.
+
+		As soon as you write a constructor, you also lose c-style initialization ("Student s = {60, 70, 80};").
+		As soon as we write a constructor, C++ knows we are  treating these as objects, so it gets rid of the structure behaviour inherited from C.
+
+	Odd technical example:
+		struct MyStruct {
+			const int myConst;
+			int &myref;
+		}
+
+		The above should look strange, because the above variables would normally have to be initialized.
+		However, the above is correct.
+		Field initializers are not allowed here in the definition.
+
+		struct MyStruct {
+			const int myConst = 5; // not allowed
+			int &myref = m; // not allowed
+		}
+
+		We can't do this. What if we want each object to have a constant field that we define during initialization? The above would contradict our ability to do that.
+		You cannot initialize constants/references in the constructor body, either! At that point, it's too late (see below).
+
+		Potential midterm question: What happens when an object is created?
+			1. Space is allocated (on the stack or on the heap, depending on how it's created).
+			2. Fields are initialized and default constructors (if present) are created.
+			3. The constructor body runs.
+
+		To fix this initialization problem, we will hijack step 2:
+			Member Initialization List
+				Note: We can only do this for a constructor, not on any other method in the class.
+
+				Struct MyStruct {
+					const int myConst;
+					int &myRef;
+					MyStruct(int c, int &r):       // Woah!
+						myConst(c), mrRef(r) {     // Done with member initialization list, continue with constructor body.
+							...
+						}
+				};
+
+				Fields are initialized in declaration order, irrespective of the order in the member initialization list.
+				Step 2 above no longer executes. We have circumvented it.
+				We can use MIL whenever we write a constructor.
+				e.g.
+					struct Student {
+						int assns, mt, final;
+						Student(int assns, int mt, int final)
+							: assns(assns), mid(mid), final(final) {} // Valid!
+					};
+
+					"assns(assns)" is the same as writing "this->assns = assns". Inside the MIL, we guaruntee that the names used are fields. The regular scope of variables also applies.
+
+				Advantages of the MIL:
+					(+) only way to initialize constants/references
+					(+) can use the same name for fields/parameters (no need to type "this->")
+					(+) can be more efficient (we don't initialize the default values then overwrite them in the constructor body, only 1 assigment per field)
+
+				Let's say we have a Vec inside the MIL:
+					struct Student {
+						int assns, mt, final;
+						Vec V;
+						Student(int assns, int mt, int final)
+							: assns(assns), mid(mid), final(final) {} // Valid!
+					};
+
+					Above, the default Vec constructor will be called if we don't put it in the MIL.
+						"We can call non-default constructors ourselves, but we will discuss that later in the term." -NN
+
+	Copy Constructors and Shallow Copy vs Deep Copy
+		Consider the following:
+			Student billy(60, 70, 80);
+			Student bobby = billy;
+		How does this initialization occur?
+		We are constructing an object as a copy of another.
+		We are calling the Copy Constructor.
+			It takes one parameter which is a constant reference to the type of the class.
+			You get a default copy constructor for free. It does a field-for-field copy.
+			Note: We get two other things for free - Destructor and Copy Assignment Operator (we will discuss these on Thursday).
+
+			The default copy constructor looks like this:
+				struct Student {
+					Student(const Student &other)
+						: assns(other.assns),
+						  mt(other.mt),
+						  final(other.final) {}
+				};
+
+			Rule of thumb: Any time dynamic memory comes into play, we must write our own constructor/destructor/copy-constructor.
+			e.g.
+				Struct Node {
+					int data;
+					Node *next;
+					Node(int data, Node *next): data(data), next(next) {} // constructor
+					Node(const Node &other): data(other.data), next(other.next) {} // what our default copy constructor looks like (only a "shallow copy")
+				};
+
+				Node *n = new Node(1, new Node(2, new Node(3, NULL)));
+				Node m = *n;
+				Node *np = new Node(*n);
+				Let's look at the memory here, in a linked-list style pointer diagram (n, m, np are on the stack, things created with new are on the heap):
+
+					n[  ]->[ 1 ][  ]->[ 2 ][  ]->[ 3 ][ \ ]
+					         ^          ^
+					        /		    |	
+					m[ 1 ][  ]          |
+	                                    |
+					np[  ]-->[ 1 ][  ] -'
+
+					Not three copies of the entire list! It's just a shallow copy!
+					Only one new Node pointer is created. If the original list (n) gets deleted, m and np will not point to valid blocks of memory!
+
+			We need to perform a "deep copy" to create an entirely new linked list.
+			Deep copy constructor:
+				Node(const Node &other):
+					data(other.data),
+					next( other.next ? new Node(*other.next) : NULL)
+					{}
+
+				If other.next isn't NULL, point to the next Node.
+				Node(*other.next) is a recursive call to the copy constructor.
+
+		Lots of excellent examples in classes/constructor/
+		"VERY GOOD TO STUDY FOR THE MIDTERM!" -NN

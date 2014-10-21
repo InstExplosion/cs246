@@ -1,0 +1,87 @@
+---------------------------------------
+Midterm Review
+
+Two Sections:
+    Linux
+    C++
+
+Bread and butter commands
+    ls
+    pwd
+    diff
+    cd
+    egrep
+
+Regular Expressions
+    . ^ * + ? $
+    (expr1 | expr2 | ...)
+    [] one occurence of characters listed
+    [^ ] one occurence of characters except characters listed
+    \ to escape special characters "linux\.student\.cs\.uwaterloo\.ca"
+
+    cs246 or CS246
+        egrep "(cs|CS)246"
+
+    Lines with a 4 eventually followed by a 2
+        egrep "4.*2"
+
+    Begin with any number of fours then any number of twos
+        egrep "^4+2+"
+
+    lines with only a commented out message to cerr
+        egrep "^ *// *(std::)?cerr"
+
+Globbing Patterns
+    * any number of char
+    ? one occurence of any char (like a . in regex)
+    {expr1,expr2} OR statement
+    [] one of the chars
+    [! ] not one of the chars
+
+Difference between regular expressions and globbing expressions:
+    Globbing expressions are used/evaluated within the shell before the command is run.
+    Regular expressions are broader and evaluated by the command (e.g. egrep).
+
+I/O Redirection
+    stdin
+    stdout
+    cerr
+
+    ./myprog <input.txt > output.txt 2> /dev/null
+
+Piping
+    Takes the output of one program and uses it for input of another.
+        egrep "^(...)$" /usr/share/dict/words | egrep "[az]" | wc -w
+
+Bash Scripting
+    -e -r -x -w -d check various permissions
+        -r exists and readable
+
+    -eq -gt -ge -lt -ne compare two integers
+
+    == !=
+
+    echo -n no trailing newline
+
+    #!/bin/bash
+
+    while read line; do
+        count=0
+        for word in ${line}; do
+            count=$(( $count + 1))
+            var=$(( $count % 1))
+            if [ $var -eq 0 ]; then
+                echo -n $word
+            fi
+        done
+        echo ""
+    done < file.txt
+
+    {} are optional, but explicitly outline variable names. I would use them every single time.
+
+C++
+    Expected to know most of everything from CS136
+    if, for, while loops
+    functions
+    various data types
+    pointers

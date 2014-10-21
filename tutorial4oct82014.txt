@@ -1,0 +1,72 @@
+-------------------------------------------
+Tutorial 4
+
+No assignment the same week as the midterm.
+
+Pointers and References
+Memory Management
+	Should have to use heap-allocated memory for question 6 (not malloc)
+Overloading
+
+int x = 42;
+int *y = &x; // pointer to x
+int &z = x; // reference to x
+
+x == z; // true
+x == y; // false? (the compiler crashes here and stops you from comparing int to ptr)
+&x == y; // true
+z == y; // crash
+&x == &z; // true (comparing the address of x to 'itself')
+
+	"Pointers and integers are incomparable, like ..."
+
+const int *a = &x;
+*a = 20; // nope
+a = &y; // yep (mutating a, not the const int a points to)
+a = &z; // yep
+
+int * const b = &x;
+*b = 10; // yep
+b = &y; // nope
+b = &z; // nope, for two reasons: trying to change what b is pointing to, and z is not an int (while b is a pointer to a _const int_)
+
+Passing things by reference and passing things by value:
+	int foo(int *p, int q, int &r)
+	Arguments are by address, value, and reference, respectively.
+
+	int foo2(const int &r);
+		constant reference
+		prevents copying and prevents changing
+
+		can call foo2(10);
+
+Memory Management
+	Memory stored on the stack
+	invalid.cc:
+		Declared variables become invalid outside of block/function scopes
+
+		Not using malloc/free, we are using new/delete
+
+		int *p = new int; // creates int in the heap
+		...
+		delete p;
+
+		int *q = new int[10];
+		...
+		delete[] q;
+
+		valgrind ./a.out
+			analyzes memory use
+
+Overloading Functions
+	int foo(int x, int y);
+
+	Which of these are valid overloads of above?
+		int foo(int x); // yep
+		double foo(int x, int y); // nope (return value is ignored)
+		int foo(double x, int y); // yep
+		int foo(double x, double y); // yep
+		int foo(int x, int y, int z = 7); // it could be called with two ints sometimes, so it doesn't work (ambiguous)
+
+Terminal Tip:
+	Screen

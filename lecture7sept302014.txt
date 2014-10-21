@@ -1,0 +1,135 @@
+---------------------------------------------------------------
+I missed lecture 7.
+The following is transcribed from Anna Lorimer's written notes.
+---------------------------------------------------------------
+Lecture 7
+
+Streams
+
+C++ Provides a string type: std::string
+	Available in io/readstrings:
+
+
+	#include <iostream>
+	#include <string>
+
+	int main () {
+		string s; // you only have to change the type
+		cin >> s;
+		cout << s << endl;
+	}
+
+
+	*cin reads until whitespace
+
+If you want to read in an entire line, use getline:
+	getline(cin, s); // s is a string variable
+		This reads until newline
+
+In C you would use scanf with format specifiers.
+	You don't need format specifiers in C++ (%s string, etc.)
+
+How would you format cout? I/O Manipulators.
+	e.g. cout << hex << i;
+		hex is an i/o manipulator that prints i in hexadecimal
+		This works by sending hex to cout. Nothing is printed but it changes how cout behaves by telling cout to set itself to hexadecimal.
+		You have to reset cout after if you no longer want hex.
+			e.g. cout << dec; // changes hex to decimal
+
+There are lots of I/O manipulators:
+	Look at <iomanip> header
+	e.g. Left and right precisions (justifications)
+		cout.width(20);
+		cout << left << "Left alligned!" << endl;
+		cout << right << "Right alligned!" << endl;
+
+Stream abstraction works for other sources of data.
+	How to read from a file:
+
+	#include <fstream>  // gives you access to ifstream (read) and ofstream (write)
+	#include <iostream>
+	using namespace std;
+
+	int main () {
+		ifstream f("suite.txt"); // here "ifstream" is the type, "f" is the name of the variable (*cough*OBJECT*cough* -JR), and "suite.txt" is the initialization.
+		string s;
+		while (f >> s) {  // while read is successful
+			cout << s << endl;
+		}
+	}
+
+	Anything you can do with cin (i.e. istream), you can do with a variable (f) of type istream.
+		Same for cout and ofstream.
+
+	You can treat a string as the source of input (input string).
+	You can also write to a string.
+		Include <sstream> which gives you istringstream (input) and ostringstream (output)
+
+	Example: buildstring.cc
+
+	
+	int low = ...;  // constant string
+	int high = ...;
+	ostringstream ss;
+	ss << "Enter a number between" << low << "and" << high << endl
+	string s = ss.str(); // extract a string out of ostringstream
+	cout << s;
+
+
+	This is useful for converting a string to a number.
+
+	getnum.cc:
+
+	#include <iostream>
+	#include <string>
+	#include <sstream>
+	using namespace std;
+
+	int main () {
+		int n;
+		while (true) {
+			string s;
+			cout << "Enter a number:" << endl;
+			cin >> s;
+			istringstream ss(s);
+			if (ss >> n) break;  // read int from ss
+
+			cout << "That's not a number! Try again:" << endl;
+		}
+		cout << "You entered " << n << endl;
+	}
+
+
+	Look at readints5.cc and readintsSS.c, they do the same thing.
+
+	*The only time reading in a string fails is EOF.
+
+Strings
+	In C we don't have strings, we have NULL-terminated character arrays.
+		This is annoying, namely the fixed size thing.
+		You might accidentally overwrite the null terminator.
+	C++ also has no built in strings, but provides string type.
+		This grows and shrinks as needed.
+
+		Example: string s = "Hello"; // type of s is stdstring, type of "Hello" is a C-style string (i.e. a character array that is NULL-terminated)
+		*You're assigning a C-style string to a C++ string -> should give a compiler error!
+		C++ has a special feature which converts a C-style string to a C++ string (they are NOT the same).
+
+---------------- In C ---- vs. -- In C++ ---
+Equality      | strcmp()      | s1 == s2
+              |               |
+Inequality    | strcmp()      | s1 != s2
+              |               |
+Comparisons   | strcmp()      | <, >, ==
+              |               |
+Length        | strlen()      | s.length()
+              |               |
+Concatenation | strcat()      | s = s1 + s2
+--------------------------------------------
+
+In C you can directly access individual characters in a string.
+	You can still do this in C++ (individual access)
+	This is done with overloading square brackets [].
+	Example:
+		std::strings = ...;
+		s[0], s[1], ... are accessible

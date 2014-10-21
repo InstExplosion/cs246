@@ -1,0 +1,73 @@
+-----------------------------
+Tutorial 3
+
+Strings, Filestreams, Example
+
+#<include <string>
+#include <iostream>
+
+using namespace std;
+int main() {
+	string str = "Over 9000!!!";
+	cout << str[5] << endl;
+	cout << str.at(5) << endl;
+	cout << str.length() << endl;
+	cout << str.size() << endl;
+	cout << str.substr(0,6) << endl; // returns [0-5]
+	cout << str.at(20) << endl; // Throws an exception
+}
+
+Filestreams
+	#Include <fstream>
+using namespace std; // Don't have to say stdstring
+
+int main () {
+	string str1 = "Hello world.";
+	string str("infile");     
+	ifstream ifs(str.c_str()); // "ifs filename must be C-style string" (null terminated)
+	ofstream ofs("outfile");
+	string s;
+	ifs >> s;
+	if (! ifs.fail())
+		for (int i=s.size()-1; i >= 0; --i)
+			ofs << s.at(i);
+		ofs << endl // Tests will fail in marmoset if you don't have end of line chars
+}
+
+Read first n lines of a file and write each number in that file which is divisible by a given number x.
+./divisor
+n
+infile
+x
+outfile
+
+divisorExample.cpp
+// Multiple cins can be on different lines since whitespace is ignored
+getline(instream, lines[i])
+istringstream ss(lines[i])
+
+Test:
+	Negative numbers
+	Test divide by zero
+	Boundary cases
+		Max Number of Lines
+		Max+1 Lines
+		Zero Lines
+	Empty Input File
+	Don't test error cases, just edge/corner cases "Only give our programs valid input"
+
+How do you create an empty file?
+	cat > empty.out
+	then CTRL-D
+	OR
+	touch empty2.out
+
+Vim tips:
+	Copy & Paste
+	V for visual mode, move curser to select
+	Y copy
+	P paste
+	ctrl-v visual block (excel selection)
+	shift-v line selection
+	In command mode: w goes to next word
+		b back to beginning of line
