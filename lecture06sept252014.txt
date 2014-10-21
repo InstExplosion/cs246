@@ -1,0 +1,144 @@
+----------------------------------
+Lecture 6
+
+Clarification: Arguments vs. Input
+	$ prog a1 a2
+		"Two arguments. We're assuming the program knows how to handle this. The program can still read input from stdin, things you type." -NN
+	$ prog a1 a2 < file.txt
+		"Whenever you want to read input, read from the file. Faucet of data is just waiting there." -NN
+	"I would highly recommend looking at diff, and what status codes it sets. Diff will set ${?} to 0 if different and 1 if not the same."
+
+Recall:
+	cout << stuff << endl; 		// endl is optional, it just adds a new line
+	C++ provides three I/O stream objects
+		cout: print to stdout
+		cin: reads from stdin
+		cerr: prints to stderr
+
+I/O Operators
+	<<: output operator, "put to" operator
+	>>: input operator, "get from" operator
+
+	e.g.
+		cout << x; // put x to stdout
+		cin >> y; // get from stdin into y
+		cerr << z; // put z to stderr
+
+		"The arrow is in the direction of information flow."
+
+intro/plus.cc (Reads 2 numbers and adds them.):
+
+	#include <iostream>
+	using namespace std;
+	// Won't write the above two lines any more.
+
+	int main () {
+		int x, y; // two int vars
+		cin >> x >> y;
+		cout << x + y << endl;
+	}
+
+	// Whitespace delimits strings from stdin. "./plus" then "4 5" is sufficient.
+	// ./plus, 4 five --> 4
+	//		y is not necessarily set to zero, it is a garbage stack location
+
+	cin is waiting for input, ignoring whitespace.
+	If a read fails, the program will move on! This is troubling.
+		Scary that there is no indication of failed read.
+		If a read fils then cin.fail() is true.
+		If a read fails due to end of input then both cin.fail() and cin.eof() are true.
+
+e.g. Read all integers from stdin and print them, one per line, on stdout. Stop if a non-integer or EOF is encountered.
+lectures/io/readInts.cc
+
+int main () {
+	int i;
+	while (true) {
+		cin >> i;
+		if (cin.fail()) break;
+		// come here only if read is successful
+		cout << i << endl;
+	}
+}
+
+./a.out:
+3
+3
+4
+1 2 3 4
+5
+2
+five
+^ program terminates here when these characters are encountered.
+
+CTRL-D or CTRL-C will also terminate. cin.fail() and cin.eof() flags will both be raised if we do that.
+
+There is an implicit conversion from cin to void*. "A pointer with no type, or a pointer that can point to anything."
+	"cin is a stream object of type istream"
+	void* is a pointer to anything. It's key here that we can treat something as a pointer.
+	A pointer is a numeric quantity
+	if (cin) // true if !cin.fail(), false otherwise
+
+	Now we can do "if (!cin) break;"
+
+We have said that >> is the input operator.
+In C/C++, >> is the right bit shift operator;
+	a>>3; // 10101 >> 3 = 00010 (21 -> 2) (divides by 2^3)
+These operators are overloaded.
+	a>>3; vs cin>>y; have different meanings.
+	Compiler checks left hand side
+	LHS: int
+		treats >> as bit shift operator
+		result: int
+	LHS: istream
+		treats >> as input operator
+		result: cin (an istream)
+		This is useful for using multiple operators in series.
+			cin >> x >> y
+			Here, "cin >> x" results in a cin object (and in x having a value)
+				This becomes "cin >> y", which results in cin; which ends.
+		This is called casdading.
+			We've already taken advantage of this, e.g. "cout << i << endl"
+		You can cascade as many times as you want.
+			cin >> x >> y >> z >> a;
+				If cin fails early on, all subsequent reads fail.
+	We can combine 2 lines in readInts.cc:
+	if (!(cin >> i)) break; // "cin >> i" mutates i and evaluates to cin, which evaluates to binary based on whether the read was successful.
+
+Rewriting readInts.cc (readInts4.cc):
+
+int main () {
+	int i;
+	while (cin >> i) {  // Works if we only care about reads failing. Does not check for EOF. BE ABLE TO EXPLAIN THIS ON THE MIDTERM! (produces cin, converts to void*)
+		cout << i << endl;
+	}
+}
+
+e.g. Read all ints and echo them to stdout. Skip non-integers. Terminate at EOF.
+	(Can't use simplified code above, since we need to distinguish _why_ the read fails.)
+
+int main () {
+	int i;
+	while (true) {
+		if (!(cin >> i)) { // something failed, this is the fail block
+			if (cin.eof()) break; //done
+			else { // bad read (received a non-integer)
+				// for non-integer reads, we could:
+				//		a) do nothing (but this will loop infinitely, because the fail flag will still be raised (cin.fail() is true)! )
+				// 			recall: "once a read fails, all subsequent reads fail"
+				// 		b) clear the flag: cin.clear();
+				// 			if we only do this, we loop forever because that bad input is still there, even though the fail flag is cleared
+				// 		c) ignore the bad input: cin.ignore();
+				// 			This works! :)
+				cin.clear();
+				cin.ignore();
+				// (!(cin >> i)) continues successfully now.
+			}
+		} else {
+			cout << i << endl;
+		}
+	}
+}
+
+"You will be tested on these technical details on the midterm." -NN
+Look at http://stackoverflow.com/a/6791854  -JR

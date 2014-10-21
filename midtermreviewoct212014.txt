@@ -85,3 +85,142 @@ C++
     functions
     various data types
     pointers
+
+    Strings
+        Must #include <string>
+        .c_str() returns char*
+        .length()
+        .substr(n,m) first index n included, m characters 
+
+    Streams
+        Must #include <iostream>
+        cin, cout, cerr
+
+    #include <sstream>
+    string s = "Hello World";
+    stringstream ss(s);
+    stringstream st("1 2 3 4 5 6");
+    ss.str() returns current contents of stringstream as a string
+
+    #include <fstream>
+    filestream
+
+    string file = "myfile.out";
+    ifstream input("myfile.in");
+    ofilestream output("myfile.out");
+
+    Input Stream
+        stream >> var attempts to read from stream to var
+        s.fail() returns true if the read operation has failed
+        s.clear() sets fail flag to false
+        s.ignore() ignores next char from stream
+        stream.peek() returns next char in stream without removing it
+
+    Dynamic Memory
+
+    MyClass * cp = new MyClass;
+    delete cp;
+    cp = new MyClass[20]; // array of MyClass of size 20
+    delete[] cp;
+
+    Pointers
+    int n = 42;
+    int * np = 0; // NULL int pointer
+    np = &n;
+    int * np2 = new int; // pointer to an int on the heap
+
+    References
+    Needs to be initialized
+    Can't be uninitialized
+    Don't need to be dereferenced
+    Address it points to cannot be changed
+
+    Default Parameters
+    void function(int x = 0, int y = 0); // optional args must be at the end of the parameter list
+
+    Overloading
+    We can have multiple functions that have differenct function headers
+
+    int foo(int x);
+    int foo(int x, int y = 0); // invalid overload
+
+    Operator Overloading
+    >>
+    <<
+    +
+    -
+    =
+    etc...
+
+    Classes
+    Group of related data and methods
+    struct Rational{
+        int numer, denom
+        operator+(const rational &r);
+
+    Methods
+    var.method() if var is object
+    var->method() if var is a pointer
+    this
+
+    Default C constructor s = {1, 2, 3}
+
+    Initialization List
+        Describe the steps that a constructor goes through
+        1. Allocate Space
+        2. Initialize members to default values/initialization list values (in the order they were decalred in)
+        3. Execute constructor body
+    }
+
+    Copy Constructor
+        struct IntClass{
+            int * data;
+
+            IntClass(IntClass &n): data(new int(*(n.data))){}
+        }
+
+        Default is shallow
+
+        [ value = 5 ]  [  value = 5 ]
+        [ next = &B ]  [  next = &B ]
+              |             |
+              :,_           B
+                 "-> [            ]
+
+
+    Know how to write a deep-copy constructor
+
+    Destructor
+
+    Assignment Operator
+
+        IntClass operator=(IntClass &n){
+            if (this == &n)
+                return this;
+            IntClass temp;
+            temp.data = this->data();
+            this->data = new int(*(n.data()))
+            delete temp;
+
+            return *this;
+        }
+
+    Remember the rule of three
+    Copy constructor, destructor, assignment operator
+    Need to implement all three if you encounter non-continuous space
+
+        int x = 5; assignment operator
+        int y = x; copy constructor
+
+    Copy and Swap Idiom
+
+    IntClass& operator=(IntClass n){
+        int * temp = n.data;
+        n.data = this->data;
+        this->data = temp;
+        return *this;
+    } // destructor called on n when out of scope
+    Can the address of n and the address on the left hand side (this) be the same? No.
+    this !== &n
+    n is a copy of the right hand side, and will have a different address
+

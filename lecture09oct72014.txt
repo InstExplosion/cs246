@@ -1,0 +1,215 @@
+----------------------------------
+Lecture 9
+
+Recall cliffhanger from last time:
+	scanf("%d", &i);
+	cin >> i; // why does this work? (It's not being sent the address of the variable, just the name of the variable)
+	Why not use "cin >> (&i);" ?
+
+C++ provides another pointer-like type: References
+	int y = 10;
+	int &z = y; // z is a reference to y (in C++). Do NOT read this as "the address of z equals y", say "z is a reference to y".
+
+	A reference is like a constant pointer with automatic dereferencing.
+		z will always point to y.
+		We can write: z = 15; // changes the value of y
+			This sets y to 15.
+			We no longer have to do *z = 15; // illegal in C++
+			No star is needed because it will ALWAYS be automatically dereferenced.
+
+	int *p = &z; // sets p to the address of y
+		We set p to the address of z, but since z is a reference to y, we got the address of y.
+		A reference has no identity of its own. We tried to assign it a value or get its address, but got y each time.
+			It is another name for y.
+			Or we can say z is an alias for y.
+		Even doing sizeof(z) doesn't always return 4 bytes as expected in C, but the size of y.
+
+	Rules of references:
+		1. We cannot leave references uninitialized.
+			int &x; // can't do this, since constants/references must be initialized
+
+		2. A reference must be initialized to something that has an address.
+			Things that have an address are called 'Lvalues' (this is a compiler term).
+			int &x = 5; // can't do this, because 5 is not really an address but a literal value.
+			int &y = a + b; // can't do this either, because an expression doesn't technically have an address.
+
+		3. We cannot create a pointer to a reference.
+			int &*x = ...; // doesn't work (at least not in the g++ standard)
+
+			3a. We can, however, create a reference to a pointer.
+				int *&x = ...; // works
+
+		4. We cannot create a reference to a reference.
+			int &&x = ...; // not allowed
+
+			Note: we can still do *p = &z; // sets p to the address of what z is referencing
+
+		5. We cannot create an array of references.
+			int &x[3] = {1, 2, 3}; // not allowed
+				The name of an array is a pointer to the first address of the array, but &*a is disallowed.
+
+	Use references in function parameters.
+		Recall this code from last class:
+			void inc (int *n) {
+				*n += 1;
+			}
+			int x = 5;
+			inc(&x);
+			cout << x; // 6
+
+		Now we will do this with references:
+			void inc(int &n) {
+				n += 1;
+			}
+			int x = 5;
+			inc(x);
+			cout << x; // 6
+
+			In this code, x is being passed by reference. Anything we do to n is actually being done to x.
+
+		Note: We could have a reference to a function (like how we can have a constant pointer to a function).
+
+	Why does "cin >> x" work?
+		x is passed as a reference.
+
+		Let's look at the function header for the input operator:
+			istream &operator>>(istream &in, int &data) {
+				// type of cin is a reference to an istream.
+				// "int &data" is the right hand side, it takes the argument by reference.
+				// "istream &in", the left hand side, is also being passed by reference. This is so that we can set error flags on "&in" (cin)
+				// the reasoning for the return value of "istream &" is so that we aren't returning a copy istream, but rather a reference to the original istream (so it can be chained into another expression)
+				// in C, we would have to do all of this with pointers. Automatic dereferencing is the main advantage here.
+			}
+
+Suppose I have a struct:
+	struct ReallyBig {
+		...;
+	};
+	int f (ReallyBig rb) { ... }
+	f(x); // what happens here?
+
+	A copy of x is going to be made.
+		(-) This is expensive to do.
+		(-) Also, the changes to rb are not visible to the caller (the piece of code that called f)
+
+	In C, we would send a pointer to ReallyBig.
+		(+) This suppresses the copy.
+		(+) And changes made in the function are visible to the caller.
+
+	(Passing by Value vs Passing by Reference)
+
+	In C++:
+		int g (ReallyBig &rb) { ... }
+		g(x);
+			(+) This suppresses the copy.
+			(+) Changes to rb are visible to the caller.
+			(+) Automatic dereferencing.
+
+	What if we want to suppress the copy but we don't want changes made to ReallyBig.
+	Send it as a constant reference.
+		int h (const ReallyBig &rb) { ... }
+		ReallyBig x;
+		h(x); // x is passed by reference (no copy is made, so this is efficient), but also can't be modified by h.
+		// It's like you only have a read permission, but not a write permission.
+
+	Note: This can be applied to struct Node, struct llist, etc. (The various data structures from CS136)
+	Advice: Use pass by const reference for anything bigger than an int.
+		int f (int &n) { ... }
+		int g (const int &n) { ... }
+		f(5); // trying to pass 5 by a reference, but this is illegal because 5 doesn't have an address (5 is not an Lvalue).
+			f(y + y); // also doesn't work
+		g(5); // compiler WILL allow this, because it is a const and can be stored conveniently. Compiler will remember 5 as long as you don't want to change it.
+			g( y + y); // also works, for the same reason (as opposed to doing "int z = y + y; f(z);" every time).
+
+
+Note: References can't be NULL (we will get back to this in 2 weeks).
+"References are not the easiest thing to understand, go over this material and get good at using references." - NN
+
+
+Dynamic Memory
+	In C,
+		int size = ...; // size of an array
+		int *p = malloc(size * sizeof(int))
+		free(p);
+	
+	Things are not a whole lot better in C++, but we don't have to do the "size * sizeof(int)" calculation.
+	C++ Does support malloc() and free(), but DON'T use it (disallowed in this course)!
+		instead, use 'new' and 'delete'
+
+		In the linked list example (in C):
+			struct Node {
+				int data;
+				Node *next;
+			}
+
+		Let's dynamically create a node, in C++:
+			Node *np = new Node;
+
+		'new' is type-aware.
+			We don't need to compute the amount of memory we want.
+			This is less error-prone. With 'new', you will always get enough memory (or you can receive an error, which we will come back to later).
+
+		When you are done with the node:
+			delete np;
+
+		"Do not mix malloc/free with new/delete, that is the worst thing that you can do! Bad things happen. Don't do it. This is what happens when you combine C/C++ codebases." - NN
+			delete looks at a book-keeping table that is only updated by new, so it can't recognize malloc'ed things.
+
+	Dynamic Arrays
+		Suppose I read in a number and create an array of that size:
+			cin >> n;
+			int *arr = new int[n]; // dynamically allocated array of size n! new is smart enough to do this!
+			// You just tell n that you want n integers, and it uses its type-aware magic to calculate and allocate enough memory.
+
+		Once you are done:
+			delete [] arr; // a lot of people forget the '[]', then bad things happen.
+
+			"Some course notes say that 'delete arr' would just delete the first element of the array. This is nonsense, it's really an undefined thing that is compiler-specific. Just remember the '[]'" -NN
+
+		If you allocated memory, it is still your job to deallocate it.
+
+		"And did I mention, don't forget the '[]'!" - NN
+
+		Q: Can you delete something by reference?
+		A: "Not sure, don't hold me to this, but I think that would work." - NN
+
+Stack vs Heap Allocation (This should be review)
+	You have access to some memory, which is divided into three things:
+		program
+		stack
+		heap
+
+		-----------
+		| Program |
+		-----------
+		| Heap \/ |
+		|      \/ |
+		|      \/ |
+		|      \/ |
+		|         |
+		|grows dwn|
+		-----------
+		| Stack ^ |
+		|grows up |
+		-----------
+
+	Local Variables:
+		Allocated on the stack.
+		Stack space is reclaimed when local var goes out of scope (a function returns, etc. and the function's local vars are freed).
+
+		Node n; // n is local variable on the stack
+		Node *np = new Node; // new Node is on the heap (dynamically allocated) but *np is local, on the stack.
+
+		    ...
+		|         |
+		| Node    |
+		|         |
+		|         |   (heap)
+		-----------
+		| np      |   (stack)
+		| n       |
+		-----------
+
+	Heap-allocated data continues to live even when the pointer goes out of scope.
+		That is a memory leak!
+		(stack allocated local var of a heap-allocated value goes out of scope when, say, the function that assigned the var returns)

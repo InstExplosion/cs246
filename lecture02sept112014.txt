@@ -1,0 +1,103 @@
+---------------------------------------------------------
+Lecture 2
+
+Directories start from root '/', these are absolute paths
+Relative paths start from the current directory
+	If current dir is '/home/nanaeem/cs246', then the file (remember, directories
+	are actually files) 'Fall/a0' is the same as '/home/nanaeem/cs246/Fall/a0'.
+	The advantage of relative paths is that it reduces typing.
+
+Four different special directories:
+	1. '.' - refers to current directory
+		eg. '$> cd .'  does nothing
+	2. '..' - refers to the parent directory
+		eg. '$> cd ..' changes pwd to parent directory
+		If you want to get to the grandparent, '$> cd ../..'
+	3. '~' (Tilde) refers to the home directory
+		'$> cd ~' changes to home directory
+		Shortcut: '$> cd'
+		Can continue path '~/cs246/Spring'
+	4. '~userid' - userid's home directory (useful for sharing files between unix accounts)
+		eg. '$> cd ~nanaeem'
+
+To see the contents of a directory use 'ls' command (listing).
+	- Shows files in your current directory
+	- Does not show hidden files (starting with '.', icluding special dirs './' and '../') by default
+	- 'ls -a' shows all files
+
+In unix, there is no concept of file extensions (like .txt), although conventions are often enforced.
+
+Wildcard Matching
+		List all files ending with '.txt':
+				'$> ls *.txt'
+					   ^^^^^ globbing pattern
+					   ^     match anything
+					    ^^^^ that ends with '.txt'
+				'globbing' comes from a legacy Glob program that performed wildcard searches
+				The shell finds all the files that match the globbing pattern, and replaces the globbing pattern with those files.
+				'ls *.txt' --> 'ls sample.txt t1.txt t2.txt'
+				The shell is doing the hard work here.
+
+				Behaves the same here as 'echo *.txt'
+'$> rm' removes (permanently) the specified file(s)
+	- University pays $45k a year with snapshot
+	- 'Google version control'
+
+'$> echo' parrots whatever the input is.
+	'$> echo '*.txt'' outputs *.txt
+	Single quotes and double quotes behave the same here.
+	Do a 'man ls'.
+
+CTRL-C to kill execution of curent program.
+CTRL-D sends EOF. (Useful for telling cat to stop listening to stdin and clean up execution)
+Working with files
+	'$> cat' (concatenate)
+		Show or display contents of a file.
+		Simply typing 'cat' will hang the program until text is input.
+		'cat > output.txt' output redirection
+		If output.txt exists already, it will be overwritten.
+		After pressing Enter, the line is written to the file.
+
+	In general: 'command args > filename' puts any output into file
+	This is called output redirection.
+
+	Input redirection: 'cat < sample.txt', which is equivalent to 'cat sample.txt' here. But with redirection, the shell is opening the file instead of cat.
+		If file contains another filename, it only prints the filename.
+
+	'$> wc filename' wordcount
+	'wc sample.txt' outputs filename because wc opens the file, but with 'wc < sample.txt', wc doesn't know the filename
+	'cat < output.txt > myfile.txt'
+	Note that shell commands will create the file if it doesn't exist, or overwrite the file if it does!
+
+Every process is attached to three streams:
+						  /--- stderror (standard error)
+	stdinput --- [program]
+						  \--- stdout (standard output)
+
+	stdin - Where the input comes from (default: the keyboard).
+	stdout - Where the output goes (default: screen). This is buffered, and flushed periodically.
+	stderr - Where the errors go (default: screen). Seen immediately, one character at a time (never buffered).
+
+	Input redirection changes stdin from keyboard to files (or socket from the internet, etc.)
+	$> myprogram < in.txt > out.txt 2> error.log
+		'2>' handles stderr stream
+
+What if you want to append to a file? Go to the tutorial.
+
+Pipes ('|')
+
+						  			  /--- stderror2
+	stdout1 | stdinput2 --- [program2]
+						  			  \--- stdout2
+
+	Pipe output of process 1 into process 2.
+	'$> process1 | process2'
+	(| is also bitwise OR in C)
+
+	Example 1: How many words occur in the first twenty lines of sample.txt?
+	'$> head -20 sample.txt | wc -w' --> 165
+
+	Example 2: Suppose files w1.txt and w2.txt contain lists of words, one per line. Print a duplicate-free list of all words.
+	uniq - checks for duplicates that are adjacent, so we must sort first.
+	sort - sorts
+	'$> cat w1.txt w2.txt | sort | uniq'

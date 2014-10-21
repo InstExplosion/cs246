@@ -1,0 +1,116 @@
+-------------------------------------------------------
+Lecture 5
+
+Loops
+	e.g. Print all numbers from 1 to $1 ($1 is the first argument to our script)
+	#!/bin/bash
+	# count limit ---counts the numbers from 1 to limit
+	usage () {
+		echo: "Usage: $0 limit" 1>&2
+		echo " where limit is at least 1" 1>&2
+		exit 1
+	}
+
+	if [ $# -ne 1 ]; then
+		usage
+	fi
+
+	if [ $1 -lt 1 ]; then
+		usage
+	fi
+
+	x=1
+	while [ $x -le $1 ]; done			# 'le' less than or equal
+		echo $x
+		x=$((x+1))			# "$x+1" would do string concatenation
+	done
+
+For Loop
+e.g. Rename all .cpp files to .c 	# scripts/RenameC
+#!/bin/bash
+for name in *.cpp; do
+	mv ${name} ${name%cpp}cc
+done
+
+Here, the shell replaces *.cpp with a space delimited list of filenames. (a1.cpp a2.cpp ...) (globbing pattern gets replaced just before the loop's execution starts)
+
+e.g. How many times does word($1) occur in the file($2)
+#!/bin/bash
+x=0
+for word in `cat "$2"`; do 			# 'for word in cat $2' (without backquotes) will get the word 'cat' then the filename 
+									# GOTCHA: put double quotes around command arguments (without, strings with spaces are treated as multiple objsects, such as "hello word")
+	if [ $word = $! ]; then 		# '=' is used for string equality (strings on both sides) or for arithmatic (integer values)
+		x=$((x+1))
+	fi
+echo $x
+done
+
+Payday is the last Friday of the month.
+What date is this month's payday?
+$ cal | awk '{print $6}' | egrep [0-9] | tail -1
+/cs246/1149/lectures/shell/scripts/paydayThisMonth
+# elif [ $1 -eq 22 ]; then
+#	echo "on the ${1}nd"
+
+
+Testing
+	In this course, you will be expected to formally test your code before submitting.
+	- Use the script we ask you to write in a1 (runsuite)
+	Each assignment has 2 deadlines
+		Due date 1: test suites
+			Run on a correct program (public)
+			Release tests are buggy programs that we created. "The test suite that you created should be thorough enough to catch all of our bugs."
+		Due date 2: code
+	Testing tips:
+		negative/positive values
+		edge cases [0-10] check 0 and 10
+		corner cases (multiple simultaneous boundaries)
+	This is black box testing (we do not see the implementation)
+	White box: full access to implementation
+	Grey box testing: some limited acces to control flow of the program
+
+	*Read through assignment very carefully
+	*Think carefully about what the edge/corner cases are, etc. (max X, max Y)
+
+Module 2: C++
+Bjarne Stroustrup in the 80s
+	Worked at AT+T labs (same place where UNIX and C were invented)
+	Colleagues were inventors of C, UNIX
+	Playing with the language called Simula67 (considered the first OOP language)
+	Came up with 'C with Classes'
+C++ is too big to cover in one course.
+We will introduce the core concepts.
+We will focus on C++03, which is reasonably sized
+	New version is C++11, which has sme very sophisticated new concepts.
+	UW's CSCF/MFCF still don't support C++11
+
+hello.cc:
+--------------------------------------
+#include <iostream>
+using namespace std;
+
+int main() {
+	cout << "Hello World" << endl;
+	return 0;  						  // return statement must be explicitly defined in c++
+}
+--------------------------------------
+
+Output in C:
+#include stdio
+printf('Hello World')
+
+stdio/printf is available in c++, but DON'T USE IT!
+
+Preferred c++ I/O
+	#include <iostream> 	(no .h)
+	std::cout << data1 << data2;
+	std::endl;  		// newline (\n)
+
+Using G++ compiler
+Compile:
+	$ g++ hello.cc
+	Creates an executable called a.out (default name)
+	$ g++ hello.cc -o myprog
+	Creates an executable called myprog
+
+	Execute with $ ./a.out, $ ./myprog

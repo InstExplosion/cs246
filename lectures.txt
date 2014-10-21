@@ -1,4 +1,8 @@
 CS246 Object Oriented Software Development
+Fall 2014
+Lecture 1 (September 9 2014)
+------------------------------------------
+
 Nomair ("Numer[ical]") Naeem
 	Also taught: CS241 'baby compilers course', CS444 'advanced compilers course'
 	nanaeem@uwaterloo.ca 'prefer not to get emails for general course-related questions'
@@ -87,7 +91,11 @@ Module 1: Linux Shell
 		- '/user/bin' - bin directory inside the 'usr' directory inside the '/' directory
 		- Current Directory:
 			- The directory we are currently in
-			- Command 'pwd' (present working directory) outputs current directoryDirectories start from root '/', these are absolute paths
+			- Command 'pwd' (present working directory) outputs current directory
+---------------------------------------------------------
+Lecture 2
+
+Directories start from root '/', these are absolute paths
 Relative paths start from the current directory
 	If current dir is '/home/nanaeem/cs246', then the file (remember, directories
 	are actually files) 'Fall/a0' is the same as '/home/nanaeem/cs246/Fall/a0'.
@@ -106,7 +114,7 @@ Four different special directories:
 	4. '~userid' - userid's home directory (useful for sharing files between unix accounts)
 		eg. '$> cd ~nanaeem'
 
-To see the contents of a directory use 'ls' command (listing)
+To see the contents of a directory use 'ls' command (listing).
 	- Shows files in your current directory
 	- Does not show hidden files (starting with '.', icluding special dirs './' and '../') by default
 	- 'ls -a' shows all files
@@ -131,8 +139,8 @@ Wildcard Matching
 
 '$> echo' parrots whatever the input is.
 	'$> echo '*.txt'' outputs *.txt
-	Single quotes and double quotes nehave the same here.
-	Do a man ls
+	Single quotes and double quotes behave the same here.
+	Do a 'man ls'.
 
 CTRL-C to kill execution of curent program.
 CTRL-D sends EOF. (Useful for telling cat to stop listening to stdin and clean up execution)
@@ -141,8 +149,8 @@ Working with files
 		Show or display contents of a file.
 		Simply typing 'cat' will hang the program until text is input.
 		'cat > output.txt' output redirection
-		if output.txt exists already, it will be overwritten
-		After pressing Enter, the line is written to the file
+		If output.txt exists already, it will be overwritten.
+		After pressing Enter, the line is written to the file.
 
 	In general: 'command args > filename' puts any output into file
 	This is called output redirection.
@@ -187,6 +195,9 @@ Pipes ('|')
 	uniq - checks for duplicates that are adjacent, so we must sort first.
 	sort - sorts
 	'$> cat w1.txt w2.txt | sort | uniq'
+-----------------------------------
+Lecture 3
+
 Pipes
 	last class:
 		head -20 sample.txt | wc -w
@@ -240,7 +251,7 @@ Use Regular Expressions
 	Ranges: [0-9]
 		This chooses one digit from 0 to 9.
 
-	All characters except certain cahracters: [^abcd]
+	All characters except certain characters: [^abcd]
 		Any one character *except* a character from this set.
 
 	e.g. What if we want an optional space between cs and 246?
@@ -289,7 +300,7 @@ Useful egrep switches:
 			This returns all lines, since this isn't starting at the beginning of the line. All even substrings get found!
 		Correct: $ egrep "^(..)+$" /usr/share/dict/words
 
-	*Don't forget ^/$ on the assigment!
+	*Don't forget ^$ on the assigment!
 
 	Print all files in the current directory whose name contain exactly one 'a'.
 		$ ls | egrep "^[^a]*a[^a]*$"
@@ -339,7 +350,11 @@ File Permissions
 			Read, write, execute
 		e.g. -rw-r--r-x
 			Owners (user) can read and write, group can read, others can read and execute.
-		chmodFile Permissions:
+		chmod
+-----------------------------------------------------------------------
+Lecture 4
+
+File Permissions:
 	The owner of a file is the only one who can change file permissions
 		You can't grant the permission for other users (non-owners) to change permission
 	$ chmod [mode] [file]
@@ -358,8 +373,9 @@ File Permissions
 				r read
 				w write
 				x execute
+
 	e.g. Give others read permission
-		chmod o+r file.txt 		*Implicityly removed pre-existing permission
+		chmod o+r file.txt 		*Implicitly removed pre-existing permission
 
 	You can specify mode with 3-digit numbers (you don't have to know this)
 
@@ -369,7 +385,7 @@ File Permissions
 	e.g. Make everyone's permission exactly rx
 		chmod a=rx *.cc 	*If it was a+rx, a pre-existing w permission wouldn't be overwritten
 
-	e.g. Change owener's permissions
+	e.g. Change owner's permissions
 		chmod u-rwx *.* 		*You always have permissions. You can always re-give yourself permissions.
 
 Scripting
@@ -440,7 +456,11 @@ Scripting
 			# Block of code.
 		else # Line of code.
 
-		"Look at rename c and count words for loops"Loops
+		"Look at rename c and count words for loops"
+-------------------------------------------------------
+Lecture 5
+
+Loops
 	e.g. Print all numbers from 1 to $1 ($1 is the first argument to our script)
 	#!/bin/bash
 	# count limit ---counts the numbers from 1 to limit
@@ -493,7 +513,7 @@ $ cal | awk '{print $6}' | egrep [0-9] | tail -1
 
 
 Testing
-	In this course, you will be expected to fomrally test your code before submitting.
+	In this course, you will be expected to formally test your code before submitting.
 	- Use the script we ask you to write in a1 (runsuite)
 	Each assignment has 2 deadlines
 		Due date 1: test suites
@@ -552,11 +572,15 @@ Compile:
 	$ g++ hello.cc -o myprog
 	Creates an executable called myprog
 
-	Execute with $ ./a.out, $ ./myprogClarification: Arguments vs. Input
+	Execute with $ ./a.out, $ ./myprog
+----------------------------------
+Lecture 6
+
+Clarification: Arguments vs. Input
 	$ prog a1 a2
-		"Two arguments. We're assuming the program knows how to handle this. The program can still read input from stdin, things you type."
+		"Two arguments. We're assuming the program knows how to handle this. The program can still read input from stdin, things you type." -NN
 	$ prog a1 a2 < file.txt
-		"Whenever you want to read input, read from the file. Faucet of data is just waiting there."
+		"Whenever you want to read input, read from the file. Faucet of data is just waiting there." -NN
 	"I would highly recommend looking at diff, and what status codes it sets. Diff will set ${?} to 0 if different and 1 if not the same."
 
 Recall:
@@ -576,30 +600,28 @@ I/O Operators
 		cerr << z; // put z to stderr
 
 		"The arrow is in the direction of information flow."
-		*Keep the stream object on the right?
 
-intro/plus.cc
-	Read 2 numbers and add them.
+intro/plus.cc (Reads 2 numbers and adds them.):
 
-#include <iostream>
-using namespace std;
-// Won't write the above two lines any more.
+	#include <iostream>
+	using namespace std;
+	// Won't write the above two lines any more.
 
-int main () {
-	int x, y; // two int vars
-	cin >> x >> y;
-	cout << x + y << endl;
-}
+	int main () {
+		int x, y; // two int vars
+		cin >> x >> y;
+		cout << x + y << endl;
+	}
 
-// Whitespace delimits strings from stdin. "./plus" then "4 5" is sufficient.
-// ./plus, 4 five --> 4
-//		y is not necessarily set to zero, it is a garbage stack location
+	// Whitespace delimits strings from stdin. "./plus" then "4 5" is sufficient.
+	// ./plus, 4 five --> 4
+	//		y is not necessarily set to zero, it is a garbage stack location
 
-cin is waiting for input, ignoring whitespace.
-If a read fails, the program will move on! This is troubling.
-	Scary that there is no indication of failed read.
-	If a read fils then cin.fail() is true.
-	If a read fails due to end of input then both cin.fail() and cin.eof() are true.
+	cin is waiting for input, ignoring whitespace.
+	If a read fails, the program will move on! This is troubling.
+		Scary that there is no indication of failed read.
+		If a read fils then cin.fail() is true.
+		If a read fails due to end of input then both cin.fail() and cin.eof() are true.
 
 e.g. Read all integers from stdin and print them, one per line, on stdout. Stop if a non-integer or EOF is encountered.
 lectures/io/readInts.cc
@@ -693,10 +715,15 @@ int main () {
 	}
 }
 
-"You will be tested on these technical details on the midterm."I missed this lecture.
-The following is transcribed from Anna Lorimer's Written Notes
---------------------------------------------------------------
-Lecture 7: Streams
+"You will be tested on these technical details on the midterm." -NN
+Look at http://stackoverflow.com/a/6791854  -JR
+---------------------------------------------------------------
+I missed lecture 7.
+The following is transcribed from Anna Lorimer's written notes.
+---------------------------------------------------------------
+Lecture 7
+
+Streams
 
 C++ Provides a string type: std::string
 	Available in io/readstrings:
@@ -731,23 +758,24 @@ How would you format cout? I/O Manipulators.
 There are lots of I/O manipulators:
 	Look at <iomanip> header
 	e.g. Left and right precisions (justifications)
+		cout.width(20);
+		cout << left << "Left alligned!" << endl;
+		cout << right << "Right alligned!" << endl;
 
 Stream abstraction works for other sources of data.
 	How to read from a file:
-
 
 	#include <fstream>  // gives you access to ifstream (read) and ofstream (write)
 	#include <iostream>
 	using namespace std;
 
 	int main () {
-		ifstream f("suite.txt"); // here "ifstream" is the type, "f" is the name of the variable *cough*OBJECT*cough*, and "suite.txt" is the initialization.
+		ifstream f("suite.txt"); // here "ifstream" is the type, "f" is the name of the variable (*cough*OBJECT*cough* -JR), and "suite.txt" is the initialization.
 		string s;
 		while (f >> s) {  // while read is successful
 			cout << s << endl;
 		}
 	}
-
 
 	Anything you can do with cin (i.e. istream), you can do with a variable (f) of type istream.
 		Same for cout and ofstream.
@@ -769,9 +797,7 @@ Stream abstraction works for other sources of data.
 
 	This is useful for converting a string to a number.
 
-
 	getnum.cc:
-
 
 	#include <iostream>
 	#include <string>
@@ -825,7 +851,11 @@ In C you can directly access individual characters in a string.
 	This is done with overloading square brackets [].
 	Example:
 		std::strings = ...;
-		s[0], s[1], ... are accessibleAssorted Goodies
+		s[0], s[1], ... are accessible
+----------------------------------------------------------
+Lecture 8
+
+Assorted Goodies
 Default Arguments
 	void printSuiteFile(string filename = "mytests.txt") {
 		ifstream myfile(filename.c_str()); // ifstream arg must be a 'C-style string', not string object. (won't compile if only calling with 'filename')
@@ -981,7 +1011,7 @@ Constants
 	*Can't do *p = 10;
 	*Can still change n directly if it wasn't declared as constant.
 
-Parameter Passing **5-10% QUESTION ON MIDTERM
+Parameter Passing "5-10% QUESTION ON MIDTERM!" -NN
 	void increment(int n) {
 		n+=1;
 	}
@@ -1008,7 +1038,11 @@ Cliffhanger for next time:
 	Why can I pass it i, not &i?
 	Why not do cin >> (&i); // ?
 
-	"Pass by reference!"Recall cliffhanger from last time:
+	"Pass by reference!" -NN
+----------------------------------
+Lecture 9
+
+Recall cliffhanger from last time:
 	scanf("%d", &i);
 	cin >> i; // why does this work? (It's not being sent the address of the variable, just the name of the variable)
 	Why not use "cin >> (&i);" ?
@@ -1103,7 +1137,7 @@ Suppose I have a struct:
 		(+) This suppresses the copy.
 		(+) And changes made in the function are visible to the caller.
 
-	(Passing by Reference vs Passing by Value)
+	(Passing by Value vs Passing by Reference)
 
 	In C++:
 		int g (ReallyBig &rb) { ... }
@@ -1129,7 +1163,7 @@ Suppose I have a struct:
 			g( y + y); // also works, for the same reason (as opposed to doing "int z = y + y; f(z);" every time).
 
 
-Note: References can't be NULL (we will get back to this in 2 weeks)
+Note: References can't be NULL (we will get back to this in 2 weeks).
 "References are not the easiest thing to understand, go over this material and get good at using references." - NN
 
 
@@ -1220,3 +1254,891 @@ Stack vs Heap Allocation (This should be review)
 	Heap-allocated data continues to live even when the pointer goes out of scope.
 		That is a memory leak!
 		(stack allocated local var of a heap-allocated value goes out of scope when, say, the function that assigned the var returns)
+------------------------------------
+Lecture 10
+
+Memory Operations / The Preprocessor
+
+	A function that returns a node:
+
+		Node getMeANode() {
+			Node n;
+			return n;
+		}
+
+		This is problematic since node n is allocated in getMeANode's stack frame and must be copied to the caller's frame.
+		This is inefficient. (Although it is critical for us to perform that inefficient copy here, to avoid data loss)
+
+	If you instead return a pointer to a stack-allocated variable, really bad things happen.
+	e.g.
+
+		Node *getMeANode() {
+			Node n;
+			return &n;
+		}
+
+		This causes a 'dangling pointer'. You should NEVER do this.
+		Returning a reference is equally bad, since it's referencing a variable that becomes lost.
+
+	Create the node on the heap:
+
+		Node *getMeANode() {
+			Node *np = new Node;
+			return np;
+		}
+
+		np, the node pointer, gets copied to the callers frame (this is efficient, since pointers are only 4 bytes). This suppresses the copy of the data structure.
+
+		*Caller must keep track of the returned pointer and eventually free the memory.
+
+		main() {
+			getMeANode(); // Bad! Doesn't store the returned pointer, so we can't free the memory.
+		}
+
+
+Operator Overloading
+
+	e.g.
+		negate(int);
+		negate(bool);
+
+		<< and >> operators are overloaded (streams and I/O stuff, etc.)
+
+		+ is overloaded (arithmetic and string concatenation, etc.)
+
+	General Idea:
+		We can give meanings to C++ operators for the types we define.
+		e.g.
+
+			struct Vector{
+				int x,y;
+			}
+
+			We could write an addition function:
+
+				Vector add(vec v1, vec v2) { ... }
+				Vector v1 = { ... };
+				Vector v2 = { ... };
+				Vector v3 = add(v1, v2);
+
+				But this is ugly and awkward to implement.
+					Note that the behaviour behind creating a new vector (v3) from the existing returned vector is complex, and we'll get to this in another lecture.
+
+			Instead, let's overload the + operator:
+
+				operator+(const Vector &v1, const Vector &v2) {
+					Vector v;
+					v.x = v1.x + v2.x;
+					v.y = v1.y + v2.y;
+					return v;
+				}
+
+				Since our new header definition is unique, it is a valid overload.
+				This can now be used with "V1 + V2" (where V1 and V2 are references).
+					Note that this specific example is overloading a pre-defined C++ operator; we can also do this with our own functions.
+
+			What if we want to do "Vec v4 = 3 * v3" or "Vec v5 = v3 * 3" ? This requires TWO overloads, for each new LHS/RHS behaviour of '*'.
+
+				Vector operator*(const int k, const Vector &r) {
+					// by convention we pass ints by value, since a reference is just 4 bytes anyways.
+					// Remember to use const arguments whenever possible, this can earn marks in the hand-marking of our code.
+					
+					Vector toRet;
+					toRet.x = k*v.x;
+					toRet.y = k*v.y;
+					return toRet;
+				}
+
+				Vector operator*(const Vec &r, const int k) {
+					return k*v; // takes advantage of our other definition. Yay!
+				}
+
+				Update svn and look at lectures/c++/x-operators/
+
+			Let's also show an overloading of << and >>
+
+				Struct Grade {
+					int theGrade;
+				}
+
+				This seems silly, since we could just use an int.
+				BUT this lets us tell the compiler we're dealing with our own type, and lets us define overloads specific to grades.
+					Note that we don't talk about typedefs in this course. "We don't talk about that, it would pollute your minds." -NN
+
+				operator<<(ostream &out, const Grade &g) {
+					// we don't want a const ostream, because we will set error flags if something goes wrong, etc. You can never really const an istream.
+
+					out << g.theGrade << "%";
+					return out; // follows the chaining convention of <<
+					// DON'T return cout here, bad things would happen.
+				}
+
+				Note that we could use g now to output a stream to any other streams we can think of.
+					e.g.
+						cout << g;
+						ofstream << g;
+
+				We could define special Grade behaviour in the future. Like how the university caps your grade at 100% (and stops it from dropping below 0 :P)
+
+				istream &operator>>(istream &in, Grade &g) {
+					in >> g.theGrade;
+					if (g.theGrade < 0) g.theGrade = 0;
+					if (g.theGrade > 100) g.theGrade = 100;
+					return in;
+				}
+
+				We are assuming that the LHS of the operator is already a Grade number.
+				
+				cin >> g1 >> g2;
+				cin >> g1 >> g2;
+
+Warning: one of the questions (the last one?) in Assignment 3 is very labour-intensive for writing test cases.
+	You may want to write a script to do this, or sit two people down and play through to create test cases.
+
+Preprocessor
+	
+	Source Code --> Preprocessor --> New Source Code --> C++ Compiler
+
+	The preprocessor is the first thing that sees your source code.
+
+	You are already using it.
+		#include is a preprocessor directive.
+			It says 'find the file specified and paste it right here in the code'.
+
+		e.g.
+			#include <iostream>
+				This pastes iostream into your code.
+				It looks in the standard C++ library (/usr/include/c++/lib ?)
+
+		Alternatively,
+			#include "vecotr.cc"
+				This looks for files in this directory and pastes it in.
+
+		"This is pretty straightforward stuff, the preprocessor isn't very smart." -NN
+
+	The define directive:
+		#define VAR value
+			This creates a preprocessor variable and initializes it to a value.
+			e.g.
+				#define MAX 10
+				int array[MAX];
+
+		define is essentially a 'search and replace' function.
+		Remember that this happens before the compiler even sees anything.
+		The compiler will see "int array[10];"
+
+		This behaviour predates const.
+		Now, languages have cosnts.
+		It is often encouraged to use built-in language consts instead of #define, but #define is not completely useless.
+		This simple search-and-replace strategy is actually quite powerful.
+
+		You can do some really cool/weird stuff with the preprocessor.
+		e.g.
+			#define ever ;;
+			for (ever) {
+				// infinite loop :D
+			}
+
+		This is fun for making convoluted code. There are ways to output what the preprocessor outputs and play with this.
+		We could technically change how C++ code looks completely, if we do "#define while for" etc.
+		"PLEASE DON'T EVER DO THIS, THE TAs WILL HATE YOU." -NN
+		lol -JR
+
+		Real-world use:
+			Defined constants can be used for conditional compilation.
+			If we want to write code that works on Unix and Windows, we have problems.
+				Unix C++ applications need "int main(){ ... }"
+				Windows native applications need "int WinMain(){ ... }"
+
+				We could write two separate codebases...
+				OR we could write one codebase that is compiled in two different ways!
+				Defined constants are one tool that lets us do this.
+
+				e.g.
+					#define UNIX 1
+					#define WINDOWS 2
+					
+					#define OS UNIX
+
+					#if OS == UNIX
+					 int main(){
+					#elif OS == WINDOWS
+					 int WinMain(){
+					#endif
+
+				We are only touching on this very briefly. You will probably see in the industry (on co-op) how it's done.
+
+				Q: I compiled a C++ program with main on Windows. How?
+				A: It was probably not a _native_ Windows application.
+
+			We don't want to have to change "#define OS ..." every time!
+				We can instead use Compiler Arguments.
+				"Compiler arguments to the rescue!" -NN
+
+				define.cc:
+					main() {
+						cout << X << endl;
+					}
+
+					This wont compile, X is not defined.
+
+					g++ -DX=15 define.cc
+					./a.out
+					15
+
+					It works with compiler arguments!
+					-D is for preprocessor variables
+					We can do
+						g++ -DOS=UNIX ...
+							This sets OS to UNIX
+
+			Note how many different architectures there are nowadays: Win32, Solaris, iOS, etc.
+
+			That will involve a lot of #if #elif usage.
+
+	#define VAR
+		This creates VAR, with a value set to the empty string.
+	#ifdef VAR
+		This condition is true if VAR is defined.
+	#ifndef VAR
+		This condition is true if VAR isn't defined.
+
+		These can be used for debugging!
+		Add a bunch of cout statements that can be removed automatically before submitting to Marmoset!
+
+		Look at lectures/c++/6-preprocess/debug.cc for an example of this.
+			DEBUG is not defined in this code, and then there are #ifdef statements.
+			g++ -DDEBUG=1 debug.cc
+			This will be REALLY useful for the big question on A3 or on our project.
+----------------------------------------------------
+Lecture 11
+
+Note: Office hours moved to Wednesday 12-1:30 today.
+
+Recall: Preprocessor
+	Preprocessor Directives:
+		#include
+		#define VAR VALUE
+			This is useful for conditional compilation.
+		#define VAR
+			The default VALUE is the empty string.
+		#ifndef VAR
+	Compile Time Preprocessor Args:
+		g++ -DDEBUG
+	Examples:
+		preprocessor/define.cc
+		preprocessor/debug.cc
+	#if 0
+		...
+		Code not forwarded to the compiler.
+		Fancy way to comment things out!
+		...
+	#endif
+
+Separate Compilation
+	Break our implementation into:
+		1. Interface files (.h files)
+			Contains type definitions (struct Node, etc.), function headers.
+		2. Implementation file (.cc file)
+			Contains implementation of functions.
+
+	separate/example1:
+	vector.h:
+		struct Vec {
+			int x;
+			int y;
+		}
+
+		Vec operator+( ... );
+
+	main.cc:
+		#include "vector.h"
+			// All the compiler needs to know is that an implementation for vector exists.
+
+	vector.cc:
+		#include "vector.h"
+		Vec operator+( ... ) { ... }
+			// Sees the type def for Vec in vector.h
+
+	This separation is important in case someone wants to change the definition of "struct Vec". Having it defined in only one place is important.
+
+	To compile:
+		g++ main.cc vector.cc
+		g++ *.cc
+			This only works if your directory is well-organized.
+
+	Note that .h files aren't to be compiled. Never compile header files, they are meant to be included (and then compiled) in .cc files.
+		Compiling a .h will result in a .h.gch, a compiler header that takes priority over your other .h files. This will cause problems.
+	Note: Never include .cc files.
+
+	If you are building a huge video game and change one character, you don't want to have to change that character's definition all over the project.
+	Separate compilation is about being able to compile individual pieces of a program and then combine them.
+		This also helps for debugging. You can compile individual .cc files for debugging output instead of comiling the whole project.
+		Error "ld": Linker error. Valid C++, but no defined main function is seen by g++.
+			We can't compile separate pieces by default. g++ tries to compile AND link and produce an executable by default.
+			g++ -c vector.cc
+				This works, and outputs vector.o by default.
+			g++ main.cc
+			g++ vector.o main.o
+			./a.out
+
+		.o file is an object file.
+			Contains:
+				Binary for compiled code.
+				Information about what is needed to link (what is available and what is missing).
+
+		vector.o:
+			Says we need operator+ implementation, and we need main.
+
+		main.o:
+			Says we have main, and we need operator+ implementation for Vec.
+
+		Invoke the linker by giving all of the object files:
+			g++ vector.o main.o
+				Here, the linker is like a match-maker. It makes sure the needs of each object is met.
+
+			This is separate compilation. If main.cc is changed, simply recompile main.cc and compile using the new main.o.
+
+	Dealing with Global Variables when Using Separate Compilation:
+		File abc.h:
+			int globalVar; // declaration AND definition.
+				Any .cc file that includes abc.h has a globalVar variable.
+				When you compile this .cc file, the .o file will say "I have a variable called globalVar".
+					The linker will recognize all of the .cc files including abc.h saying that they have globalVar variable.
+					Linker will complain: You cannot have a var with the same name.
+
+		Solution:
+			1. Move definition to abc.cc:
+				int globalVar;
+				// Since we never include .cc files, abc.o will be the only one with a definition of globalVar
+			2. We need a way to declare but not define this elsewhere. In abc.h:
+				extern int globalVar; // "Somebody will define globalVar somewhere."
+				// "Forward declaration of vector.h"
+
+		See separate/example2/
+
+	separate/example3/
+		g++ *.cc
+		Compiler error: redefinition of 'struct Vec'.
+			Both linearAlg.h and linearAlg.h contain "#include vector.h".
+			linAlg.cc includes both of these .h files, so it sees two definitions of vec.
+
+		To fix this:
+			1. Don't include vector.h twice. This is hard to keep track of though.
+			This is the very reason why we talked about the preprocessor!
+
+			2. Use include guards.
+				vector.h:
+					#ifndef __VECTOR_H__
+					#define __VECTOR_H__
+
+					struct Vec { ... };
+					Vec operator+( ... ){ ... };
+					#endif
+
+					This prevents the inclusion of the same piece of code multiple times.
+				
+				Advice: Always have include guards in .h files.
+					In CS246: This will give us handmarking marks!
+					In real world: This is good practice!
+				More advice: Never use "using namespace std;" in header files. All .cc files that include that .h would be forced to use that namespace!
+					Always refer to cout as std::cout, cin as std::cin, string as std::string, etc.
+					Maybe somebody wants to implement a String type in their .cc file.
+					We CAN use the namespace in our implementation.
+
+Classes
+	The big idea behind Object-Oriented Programming (OOP) is that you can put functions inside of structs.
+	e.g.
+		Struct Student {
+			int assns, mt, final;
+			float grade () {
+				return 0.4*assn + 0.2*mt + 0.4*final;
+			}
+		};
+
+		This is a struct with a function in it. A class!
+
+		Create the student:
+			Student s = {80, 55, 70};
+		Call the grade function:
+			s.grade();
+
+			We are calling a function that is defined inside a struct.
+
+	A class is a struct that can contain functions.
+		All C++ structs can contain functions, so they are all classes!
+		"class" keyword exists: We will talk about this later.
+		For now, when we say "class", we are talking about a struct with functions.
+
+	An instance of a class is called an object.
+		Above, 's' is the object and 'Student' is the class.
+
+	A function residing insed a class is called a member function or a method.
+
+	In grade() above, we use FIELDS of the struct instead of local variables.
+		This method is using variable names it has not declared.
+		This structure definition does not reserve any memory, it just says what it means to be a student.
+		What do assns, mt, final refer to in grade()?
+			They refer to the assns, mt, and final for the object on which grade was called.
+			They are the fields of the current object.
+				Student s = {80,55,70};
+				s.grade(); // assn, mt, final marks of s
+
+				Student billy = {80, 70, 90};
+				billy.grade(); // billy's grades are used
+--------------------------------------------------
+Lecture 12
+
+Recall from last time:
+	Struct Student {
+		int assns, mt, final;
+		float grade() {
+			return assns*0.4 + mt*0.2 + final*0.4;
+		}
+	}
+
+	Student s = {80,55,70}; // c-style initialization
+	s.grade();
+
+
+Function vs Method
+	Method has an additional hidden parameter called "this".
+	"this" is a pointer to the object on which the method was called.
+
+	Inside grade,
+		this == &s
+		*this == s
+
+	In the grade() code above,
+		this->assns*0.4 +
+		this->mt*0.2 +
+		this->final*0.4;
+
+		This is equivalent to the previous example, since we don't explicitly need to use "this".
+		Sometimes it is useful to disambiguate between global variables and fields, etc.
+
+Constructors
+	Now:
+		Student billy = {90, 80, 70};
+			90, 80, 70 are compile-time constants. This is limited and unrestricted (we could give a mark >100).
+
+	It would be nice to be able to do arbitrary computation for initializing an object.
+	We can implement constructors, which are methods used to initialize objects.
+
+	Struct Student {
+		int assns, mt, final;
+		float grade() { ... };
+
+		Student(int assns, int mt, int final) { // A constructor! These must be the same name as the class, and can't specify any other return type.
+			this->assns = assns;
+			this->mt = mt;
+			this->final = final;
+		}
+	};
+
+	"this" came in handy here to differentiate between constructor arguments and the object's fields.
+	Note that we can perform computations/checks before assigning the field values.
+
+	We can call the constructor with the following (both of these are EXACTLY the same):
+		Student billy(80, 55, 70);
+		Student billy = Student(80, 55, 70);
+			
+		Both of these allocate objects on the stack.
+		If we want billy to reside on the heap:
+			Student billy = new Student(80, 55, 70);
+				The above line is incorrect. "new" always returns a pointer, not an object.
+			Fixed:
+				Student *billyPointer = new Student(80, 55, 70);
+				...
+				delete billyPointer; // "Billy is now gone. I feel like God." -NN
+
+	We have used constructors already in our code: "iStringStream ss(s)".
+
+	Advantages of Constructors:
+		(+) arbitrary computation (they are functions, so we can do anything)
+		(+) default arguments
+		(+) overloading
+
+	e.g.
+		Struct Student {
+			int assns, mt, final;
+			...
+			Student(int assns=0, int mt=0, int final=0) {
+				this->assns = assns;
+				this->mt = mt;
+				this->final = final;
+			}
+		};           // Don't forget the semicolon!
+
+		The above can take 3, 2, 1, or 0 arguments.
+			Student s(60, 70, 80);
+			Student s1(60,70); // final = 0
+			Student s2(60); // mt = final = 0
+
+		You would think you would utilize all three default arguments with the following:
+			Student s3(); // incorrect
+		But wait! That looks exactly like a declaration, and C++ would treat it as such.
+		Instead, we do:
+			Student s3; // assns = mt = final = 0
+
+	Every class comes with a default (0-argument) constructor that calls default (0-argument) constructors on fields who have constructors.
+		e.g. String class has a default (0-argument) constructor.
+		e.g. Struct Vec { int x, y; }; // also comes with a default constructor
+			 Vec v; // calls the default constructor! x and y are uninitialized though.
+
+		Base types and primitive types (e.g. int) are left uninitialized, but other objects are initialized (say, if we had a Student inside Vec).
+
+		The default constructor goes away as soon as you write a constructor of your own.
+		e.g.
+			Struct Vec {
+				int x, y;
+				Vec(int x, int y) {
+					this->x = x;
+					this->y = y;
+				}
+			};
+
+			Now, calling "Vec v;" would not compile because our default (0-argument) constructor has gone away.
+			Calling "Vec v(1, 2);" is how we need to call this constructor.
+
+		As soon as you write a constructor, you also lose c-style initialization ("Student s = {60, 70, 80};").
+		As soon as we write a constructor, C++ knows we are  treating these as objects, so it gets rid of the structure behaviour inherited from C.
+
+	Odd technical example:
+		struct MyStruct {
+			const int myConst;
+			int &myref;
+		}
+
+		The above should look strange, because the above variables would normally have to be initialized.
+		However, the above is correct.
+		Field initializers are not allowed here in the definition.
+
+		struct MyStruct {
+			const int myConst = 5; // not allowed
+			int &myref = m; // not allowed
+		}
+
+		We can't do this. What if we want each object to have a constant field that we define during initialization? The above would contradict our ability to do that.
+		You cannot initialize constants/references in the constructor body, either! At that point, it's too late (see below).
+
+		Potential midterm question: What happens when an object is created?
+			1. Space is allocated (on the stack or on the heap, depending on how it's created).
+			2. Fields are initialized and default constructors (if present) are created.
+			3. The constructor body runs.
+
+		To fix this initialization problem, we will hijack step 2:
+			Member Initialization List
+				Note: We can only do this for a constructor, not on any other method in the class.
+
+				Struct MyStruct {
+					const int myConst;
+					int &myRef;
+					MyStruct(int c, int &r):       // Woah!
+						myConst(c), mrRef(r) {     // Done with member initialization list, continue with constructor body.
+							...
+						}
+				};
+
+				Fields are initialized in declaration order, irrespective of the order in the member initialization list.
+				Step 2 above no longer executes. We have circumvented it.
+				We can use MIL whenever we write a constructor.
+				e.g.
+					struct Student {
+						int assns, mt, final;
+						Student(int assns, int mt, int final)
+							: assns(assns), mid(mid), final(final) {} // Valid!
+					};
+
+					"assns(assns)" is the same as writing "this->assns = assns". Inside the MIL, we guaruntee that the names used are fields. The regular scope of variables also applies.
+
+				Advantages of the MIL:
+					(+) only way to initialize constants/references
+					(+) can use the same name for fields/parameters (no need to type "this->")
+					(+) can be more efficient (we don't initialize the default values then overwrite them in the constructor body, only 1 assigment per field)
+
+				Let's say we have a Vec inside the MIL:
+					struct Student {
+						int assns, mt, final;
+						Vec V;
+						Student(int assns, int mt, int final)
+							: assns(assns), mid(mid), final(final) {} // Valid!
+					};
+
+					Above, the default Vec constructor will be called if we don't put it in the MIL.
+						"We can call non-default constructors ourselves, but we will discuss that later in the term." -NN
+
+	Copy Constructors and Shallow Copy vs Deep Copy
+		Consider the following:
+			Student billy(60, 70, 80);
+			Student bobby = billy;
+		How does this initialization occur?
+		We are constructing an object as a copy of another.
+		We are calling the Copy Constructor.
+			It takes one parameter which is a constant reference to the type of the class.
+			You get a default copy constructor for free. It does a field-for-field copy.
+			Note: We get two other things for free - Destructor and Copy Assignment Operator (we will discuss these on Thursday).
+
+			The default copy constructor looks like this:
+				struct Student {
+					Student(const Student &other)
+						: assns(other.assns),
+						  mt(other.mt),
+						  final(other.final) {}
+				};
+
+			Rule of thumb: Any time dynamic memory comes into play, we must write our own constructor/destructor/copy-constructor.
+			e.g.
+				Struct Node {
+					int data;
+					Node *next;
+					Node(int data, Node *next): data(data), next(next) {} // constructor
+					Node(const Node &other): data(other.data), next(other.next) {} // what our default copy constructor looks like (only a "shallow copy")
+				};
+
+				Node *n = new Node(1, new Node(2, new Node(3, NULL)));
+				Node m = *n;
+				Node *np = new Node(*n);
+				Let's look at the memory here, in a linked-list style pointer diagram (n, m, np are on the stack, things created with new are on the heap):
+
+					n[  ]->[ 1 ][  ]->[ 2 ][  ]->[ 3 ][ \ ]
+					         ^          ^
+					        /		    |	
+					m[ 1 ][  ]          |
+	                                    |
+					np[  ]-->[ 1 ][  ] -'
+
+					Not three copies of the entire list! It's just a shallow copy!
+					Only one new Node pointer is created. If the original list (n) gets deleted, m and np will not point to valid blocks of memory!
+
+			We need to perform a "deep copy" to create an entirely new linked list.
+			Deep copy constructor:
+				Node(const Node &other):
+					data(other.data),
+					next( other.next ? new Node(*other.next) : NULL)
+					{}
+
+				If other.next isn't NULL, point to the next Node.
+				Node(*other.next) is a recursive call to the copy constructor.
+
+		Lots of excellent examples in classes/constructor/
+		"VERY GOOD TO STUDY FOR THE MIDTERM!" -NN-------------------------------------------------
+Lecture 13
+
+"Content up to and including this lecture will be covered on the midterm, but not the next lecture. Study all of this!" -NN
+
+More notes on copy contructors:
+    Places where a copy constructor is called:
+        When an object is constructed as a copy of another.
+        When we pass an object by value (and a copy of it is created for the function being called).
+        When we return an object from a function.
+
+    A copy constructor takes its only parameter by const reference. The other object isn't changed.
+        Note that it has to be a reference, because to pass in an object by value you must run a copy constructor! This would create an infinite loop here.
+
+Recall the four things that we get for free:
+    Default constructor
+    Default copy constructor (only does shallow copies)
+    Destructor
+    Assignment creator
+
+Destructors
+    When an object is destroyed, a method called the destructor runs.
+        A stack allocated object is destroyed when it goes out of scope.
+        A heap allocated object is destroyed when you call delete on its pointer.
+
+    A destructor:
+        Takes no arguments.
+        Has the same name as the class, prefixed with a tilde (~).
+    A class only has one destructor.
+    There is a default destructor. It automatically calls destructors on any fields which are objects.
+        Note that base types and pointers to objects don't have destructors.
+            It's important that pointers don't have destructors by default. If they are pointing to something important, we may need a custom destructor.
+                e.g.
+                    Node *np = new Node(1, new Node(2, new Node(3, NULL)));
+
+                    stack    --------- heap ---------
+
+                     np --->[1][ ]--->[2][ ]--->[3][/]
+
+                    If there is no call to delete:
+                        np, being stack allocated, is reclaimed. No destructor runs!
+                        Three nodes are leaked!
+                    If we call delete on np:
+                        Called destructor on [1][ ]--->
+                            The default destructor runs.
+                        No destructors for fields!
+                        Two nodes are leaked!
+
+                    We need a custom destructor.
+
+    Custom destructor example:
+        struct Node {
+            ...
+
+            ~Node(){
+                delete next;
+            }
+        };
+
+        Now, calling delete on np:
+            This calls delete on the next Node(s) recursively and stops appropriately when the end (NULL pointer) is encountered.
+            Note that calling "delete NULL;" won't create any error, delete is smart enough to not do anything.
+            The first part is deleted because this whole recursive delete process is started with "delete np;".
+
+"Another thing I'm squeezing in today... you can guess why." -NN ;)
+
+Recall separate compilation:
+    Interface (.h) files: type definitions and function headers.
+    Implementation (.cc) files: implementation of functions.
+
+    This approach is now problematic because we are implementing method definitions inside class declarations, so we would have implementations in header files!
+    Now we will stop implementing methods inside class definitions.
+    Instead:
+        For a class, give method headers in the .h file.
+            e.g. (.h file):
+               struct Node {
+                    ...
+                    ~Node();
+                    Node(int data, Node *next);
+                };
+
+        We will put the implentation of ~Node in a .cc file.
+            How does the compiler know that ~Node belongs to the Node class?
+                We use the scope resolution operator.
+                In the .cc file:
+
+                    Node::~Node() {
+                        std::cout << "Destructor called" << std::endl;
+                        delete next;
+                    }
+
+                    This defines ~Node in the scope of Node.
+                    "We still always need include guards in our .h files. We will lose "
+                    See /lectures/c++/8-classes/separate/
+
+                Use Node:: in .cc files.
+                    This is called the scope resolution operator.
+                    Node::getData()
+                        getData in the context (scope) of the node class.
+
+"Now, perhaps the most technical of the four methods you get by default." -NN
+"We will show two ways this is done. Study both ways as much as you can." -NN (hint hint)
+
+Assignment Operator
+    Student bobby(60, 70, 80);
+    Student billy = bobby; // copy constructor
+    Student jane; // zero-argument constructor
+    jane = bobby; // jane already exists! We are re-assigning its fields to be a copy of bobby.
+         ^assignment operator (=)
+
+    We get a default assignment operator:
+        Default "operator=" (assignment operator) does a field-for-field copy.
+        For Student, the default operator= works fine!
+
+    We must implement our own assignment operator if dynamic memory is involved.
+        struct Node {
+            ...
+            Node &operator=(const Node &other) { // other is the right hand side of the assignment
+                // The return type is a Node reference so that cascading works (we have seen this reasoning before).
+                // Remember that this is NOT a constructor.
+
+                // Default implementation (only a shallow copy):
+                //     data = other.data;
+                //     next = other.next;
+                //     return *this; // *this is the object
+
+                // To get a deep copy, we must create new Nodes.
+                data = other.data;
+                // next = new Node(*other.next); // Call to copy constructor (must already be implemented). This can cause errors if we encounter a NULL pointer.
+
+                next = other.next ? new Node(*other.next) : 0; // 0 is equivalent to typing NULL
+            }
+        }
+        "If your copy constructor and assignment operator look very similar, you have done something wrong." -NN
+        Don't overwrite the next pointer straight away, that creates a memory leak!
+
+            Node &operator=(const Node &other){
+                data = other.data;
+                delete next;
+                next = other.next ? new Node(*other.next) : NULL;
+                return *this;
+            }
+
+            This is still wrong! It breaks with self-assignment:
+
+                Node n(1, new Node(2, new Node(3, NULL)));
+                n = n;
+
+                Node &operator=(const Node &other){
+                    n.data = n.data;
+                    delete n.next;
+                    n.next = n.next ? new Node(*n.next) : NULL; // now this behaviour is undefined, since n.next has been deleted!
+                    return *this;
+                }
+
+           We must ALWAYS check for self assignment (check if other is equal to this).
+           Note that we only have this problem in the assignment operator, because we could only be referencing the same object here.
+
+            Node &operator=(const Node &other){
+                if (this == &other) return *this;
+                data = other.data;
+                delete next;
+                next = other.next ? new Node(*other.next) : NULL;
+                return *this;
+            }
+
+            For CS246, we are done. Lots of technical details here, be sure to study it.
+
+            In the industry (we don't need to know this) your code has to be more robust.
+                What happens if we run out of memory when we try creating new Node?
+                If the call to new fails, code execution stops for this method, the stack is unwound.
+                next is now a dangling pointer. It has not been set to NULL, nor does it point to anything.
+                To fix this problem, delay the delete until after the next Node is created.
+                    This is called a delayed delete:
+                        Node &operator=(const Node &other){
+                            if (this == &other) return *this;
+                            data = other.data;
+                            Node *tmp = next;
+                            next = other.next ? new Node(*other.next) : NULL;
+                            delete *tmp
+                            return *this;
+                        }
+
+                "We don't need to do delayed delete on the exam, but we must check for NULL, return *this, etc." -NN
+
+        Another, easier to understand implementation of an assignment operator:
+            Copy and Swap Idiom
+
+                struct Node{
+                    ...
+                    void swap(Node &other){ // NOT a const reference
+                        // Swap all the fields of a given object.
+
+                        int tdata = data;
+                        data = other.data;
+                        other.data = tdata;
+
+                        Node *tnext = next;
+                        next = other.next;
+                        other.next = tnext;
+                    }
+                    Node &operator=(const Node &other){
+                        Node tmp = other; // calls copy constructor
+                        swap(tmp);
+                        return *this;
+                    }
+                }
+
+                Notice that we never used delete. We assigned tmp to be a copy of other ON THE STACK.
+                Note that this requires a functioning copy constructor.
+                "Node tmp = other;" would call a deep copy constructor, so no recursion is neeed in the assignment operator.
+                Before returning *this, "this" has the needed fields, and tmp has the old fields.
+                This also relies on having a functioning destructor, because it will be called on tmp when it goes out of scope.
+
+Summary of today's lecture and yesterday's lecture:
+    Rule of 3
+        If you need to implement a custom version of the copy constructor or the destructor or the assignment operator,
+        then you usually need to implement all three.
+
+Office hours 2-4:30pm today. 10 minute limit per student if it's busy.

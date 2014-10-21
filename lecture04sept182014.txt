@@ -1,0 +1,106 @@
+-----------------------------------------------------------------------
+Lecture 4
+
+File Permissions:
+	The owner of a file is the only one who can change file permissions
+		You can't grant the permission for other users (non-owners) to change permission
+	$ chmod [mode] [file]
+		changes permissions
+		Mode:
+			ownership class:
+				u = user
+				g = group
+				o = others
+				a = all
+			operator:
+				+ add permission
+				- remove permission
+				= set exactly
+			permission:
+				r read
+				w write
+				x execute
+
+	e.g. Give others read permission
+		chmod o+r file.txt 		*Implicitly removed pre-existing permission
+
+	You can specify mode with 3-digit numbers (you don't have to know this)
+
+	e.g. Revoke execute permission from group
+		chmod g-x file.txt
+
+	e.g. Make everyone's permission exactly rx
+		chmod a=rx *.cc 	*If it was a+rx, a pre-existing w permission wouldn't be overwritten
+
+	e.g. Change owner's permissions
+		chmod u-rwx *.* 		*You always have permissions. You can always re-give yourself permissions.
+
+Scripting
+	e.g. $ x=1			*No spaces, or else it'll try to execute a program
+		 $ echo $x
+
+		 To set a variable do not use $
+		 To access the value of a variable use $ and {}
+		 	e.g. ${x}
+		 The value of a variable is always a string
+		 	e.g. x=1 		*1 is the string '1'
+
+	Some variables are global:
+		Path - variable
+			Colon-separated list of linux paths.
+			Used for ls as ls is not built in. Shell looks in all directories specified in path.
+			*Do not overwrite path
+
+	.bashrc (how to set variables that stay)
+
+	A script is a file containing a sequence of linux commands which we can execute as a program.
+	e.g. Print the date, current user, and current directory.
+		./basic:
+
+		#!/bin/bash   			"hash, bang; shebang line"
+		date
+		whoami
+		pwd
+
+	Command line arguments to a script:
+		inside the script:
+			$1 first arg
+			$2 second arg
+			.
+			.
+			.
+			$n nth arg
+
+		e.g. Check whether the input word is in the dictionary.
+			#!/bin/bash
+			egrep "^$1$" /usr/share/dict/wprds
+			Right now, if $1 is a word, $1 will be printed. Else, nothing is printed.
+
+		e.g. A good password is not a word in the dictionary. Answer whether the password is good.
+			#!/bin/bash
+			egrep "^$1$" /usr/share/dict/words > /dev/null  	"black hole used to discard input"
+			if [ $? -eq 0 ]; then
+				echo "Not good password."
+			else echo "Maybe not a good password."
+			fi  		"This closes the if statement."
+
+			*-ne Not Equal
+			*-lt Less Than
+
+		'if' is running a program called '['
+			Anything after '[' are arguments.
+			'[' evaluates condition, sets status code
+			'if' checks the status code
+
+		Look at:
+			goodpassword check  *${#} contains the number of arguments to the script
+			goodpassword usage () { }    *A function.
+
+	General format for an if statement:
+		if [ condition ]; then
+			# Block of code.
+		elif [ condition ]; then
+			# Block of code.
+		else # Line of code.
+
+		"Look at rename c and count words for loops"
