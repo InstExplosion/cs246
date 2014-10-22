@@ -224,3 +224,12 @@ C++
     this !== &n
     n is a copy of the right hand side, and will have a different address
 
+IntClass & operator= (IntClass & n) {
+    IntClass other(n);
+
+    int * temp = other.data;
+    other.data = this->data;
+    this->data = temp;
+
+    return *this;
+}
