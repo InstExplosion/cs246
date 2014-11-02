@@ -1,0 +1,217 @@
+----------------------------------------------
+Lecture 14
+
+Explicit
+    struct Node {
+        int data;
+        Node *next;
+        Node(int data): data(data), next(0) {}
+    };
+
+    Node n(4); // legal
+    Node n = 4; // also legal
+
+    We have created an implicit conversion from an int to a Node.
+    (These implicit conversions are only valid for single argument constructors.)
+
+    This lets us do:
+        string abc = "hello";
+
+    These are silent conversions, with no error messages.
+
+    int foo(Node n);
+    Node x ... ;
+    f(x); // works
+    f(4); // also works
+
+    To disable the conversion, use the keyword explicit.
+        struct Node {
+            explicit Node(int data): ...
+        };
+        Node n = 4; // raises compiler error
+     
+Arrays of Objects
+    Exactly the same as arrays of structs or arrays of base types.
+    Not tested on the exam: the constructors available to us if we want to create an array of objects.
+    struct Vec {
+        int x,y;
+        Vec(int x, int y): x(x), y(y){}
+    };
+    Vec vectors[10]; // won't compile
+    Vec *vectors = new Vec[10]; // won't compile either
+    We don't have a constructor that takes zero arguments!
+    We don't know how to initialize vectors in an array without a zero argument constructor.
+    OPTION 1: Provide a zero argument constructor.
+        Vec(int x = 0, int y = 0);
+    OPTION 2 (On the stack):
+        Explicitly call the two argument constructor for every element.
+            Vec vectors[3] = {Vec(1,2), Vec(2,3), Vec(3,4)};
+    OPTION 3:
+        On the heap or stack, create an array of pointers to vectors.
+        Vec *vectors[10]; // array of 10 Vec pointers on the stack.
+            Note: To initialize these to NULL, loop through and set them to NULL explicitly.
+        Vec **vectors = new Vec *[10]; // on the heap
+            Note: Not a double pointer, "Vec *" elements. Same syntax as "const char *".
+
+Member Functions vs Standalone Functions
+    (Inside a class vs outside a class)
+
+    Note: operator= is always a member function.
+    When an operator (including operator=) is defined as amember function, the left hand side argument is the "this" pointer.
+        n1 = n2;
+        operator=(const Node &other)
+        "this" is n1
+        other is n2
+        Think about it as "n1.operator=(n2)"
+
+    struct Vec {
+        int x,y;
+        operator+(const Vec &v2) { // our signature has changed, since our standalone operator+ had two arguments
+            Vec v;
+            v.x = x + v2.x;
+            v.y = y + v2.y;
+            return v; // remember that the copy constructor is called here
+        }
+    };
+
+    Alternate implementation:
+    operator+(const Vec &v2) {
+        Vec v(x + v2.x, y + v2.y); // relies on two argument constructor
+        return v;
+    }
+
+    operator= HAS TO be inside, as a member function
+
+    .h file:
+    Vec Vec::operator*(const int k) {
+        return VEc(x * k, y * k);
+    }
+    "Not a standalone function, implementing as a member function of Vec."
+    v1 * k; // v1 is "this", k is argument
+
+    What if we do k * v1?
+    Left hand side k is an integer, not a vector! You can't implement "k * v1" as a member function, it has to be standalone.
+    e.g.
+        Vec operator*(const int k, const Vec &v) {
+            return v * k;
+        }
+
+    Writing the output operator as a method:
+        struct Vec {
+            operator<<(ostream &out){
+                out << x << y << endl;
+                return out;
+            }
+        }
+        Correct usage:
+            Vec v;
+            v << cout;
+            (LHS "this" must always be a vector.)
+            Cascading can cause big issues here:
+                v2 << (v1 << cout)
+            This is ugly. DON'T DO IT.
+        Moral of the story:
+            Input and output operators are always implemented as standalone functions.
+            Define << and >> as standalone functions.
+
+    You must implement the following operators as member functions (methods):
+        operator=
+            Note: We get an operator= for free, so a standalone function would be redundant.
+            This makes sense, since you would have to overwrite the default operator= method to define your own behaviour.
+        operator[] - makes your class act as an array, as in string[0] == 'N'
+        operator* - makes your object act as a pointer
+        operator() - act as a function
+        operatorT() - define an implicit conversion to T
+            e.g. "operatorVoid*"
+
+        "Why? Ask Bjarne. He's the C++ God." -NN
+
+Const is back!
+    int f(const Node &n); // says that we can't modify n's fields
+    Can you call methods on const objects?
+        Yes, as long as the method promises not to change the fields.
+
+    struct Student {
+        int assns, mid, final;
+        float grade() {
+            return assns * 0.4 +
+            mid * 0.2 +
+            final * 0.4;
+        }
+    }
+    const Student s(...);
+    s.grade(); // Can we do this? No. It hasn't promised not to change the fields.
+    To make this promise not to change fields, add const after the argument list.
+    float grade() const { ... }
+
+    Won't compile:
+        struct Student {
+            int assns, mid, final;
+            int methodCalls;
+            float grade() const {
+                methodCalls++;
+                return ...
+            }
+        }
+    C++ to the rescue with the "mutable" keywords:
+        struct Student {
+            int assns, mid, final;
+            mutable int methodCalls;
+            float grade() const {
+                methodCalls++;
+                return ...
+            }
+        }
+
+        "I bet we'll eventually have a const mutable. Then a mutable const mutable. Programmers are never happy. From a theoretical standpoint, mutable is bad. But I guess it's useful" -NN
+
+    In summary:
+        If you have constant objects, they can call constant methods.
+        Non-constant objects can also call const methods.
+
+Static
+    In C:
+        Made variable non-extern (set scope as "local").
+        Also did other things.
+    In C++:
+        Can have static fields:
+            If a field is declared as static, then it is associated with the class and not any specific object.
+            In other words, only one field in memory for all objects of the class.
+            In contrast to non-static fields, where objects each have their own memory.
+
+            struct Student {
+                static int numInstances;
+                struct int(...) {
+                    ++numInstances;
+                }
+            };
+            How is numInstances initialized?
+                Is it initialized to zero by the compiler? No.
+                We don't have space to define numInstances in the class definition, we have only declared it here.
+                We need a defninition of numInstances!
+                numInstances must be defined separately (a file external to the declaration).
+                    In .cc file:
+                        int Student::numInstances; // defined, not initialized (automatically initialized to default of primitive object, in this case 0)
+                        OR, initialize it yourself:
+                        int Student::numInstances = 0; // definition and initialization
+
+    Static Member Functions
+        Functions don't depend on any object of the class.
+        You don't call these on objects of the class.
+        There is no "this" parameter.
+        Note: Calling static member functions "static methods" is technically incorrect, since a method is part of an object. However, "static method" is a commonly used/understood phrase.
+
+        Restrictions on static methods:
+            Static methods can only call other static methods and can only access static fields.
+                struct Student {
+                    static int numInstances;
+                    static void print() {
+                        cout << numInstances;
+                    }
+                }
+            int main () {
+                student ...
+                ...
+                Student::print(); // proper way
+                billy.print(); // also works, but less accurate.
+            }

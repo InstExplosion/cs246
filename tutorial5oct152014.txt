@@ -2,134 +2,134 @@
 Tutorial 5
 
 Midterm is next Thursday!
-	It's usually a difficult midterm! (But the final is usually easier)
-	Bash and C++ both on the midterm.
-	Multiple choice and T/F questions - very tricky, really need to know your stuff.
-	Coding questions
-	Difficult midterm is meant to be difficult so that you step up your game. Sorry :(
+    It's usually a difficult midterm! (But the final is usually easier)
+    Bash and C++ both on the midterm.
+    Multiple choice and T/F questions - very tricky, really need to know your stuff.
+    Coding questions
+    Difficult midterm is meant to be difficult so that you step up your game. Sorry :(
 
 tutorials/05
-	Preprocessor
-	Classes
-	Other stuff
+    Preprocessor
+    Classes
+    Other stuff
 
 Preprocessor
-	#include < >
-	#include " "
-	#define MAX 10
-	#ifdef variable
-	#endif
+    #include < >
+    #include " "
+    #define MAX 10
+    #ifdef variable
+    #endif
 
-	IMPORTANT (for include guards):
-		#ifndef
-		#endif
+    IMPORTANT (for include guards):
+        #ifndef
+        #endif
 
-	Include Guards:
-		Prevents 'cyclical inclusion'. (See 05/cycle1.h cycle2.h)
-			e.g.
-				cycle1.h:
-					#include "cycle2.h"
-				
-				cycle2.h:
-					#include "cycle1.h"
+    Include Guards:
+        Prevents 'cyclical inclusion'. (See 05/cycle1.h cycle2.h)
+            e.g.
+                cycle1.h:
+                    #include "cycle2.h"
+                
+                cycle2.h:
+                    #include "cycle1.h"
 
-		ALL of our .h files should have include guards.
-		Instructors have explicitly asked TAs to deduct marks if we forget include guards.
-			e.g.
-				#ifndef __VAR__NAME__
-				#define __VAR__NAME__
+        ALL of our .h files should have include guards.
+        Instructors have explicitly asked TAs to deduct marks if we forget include guards.
+            e.g.
+                #ifndef __VAR__NAME__
+                #define __VAR__NAME__
 
-				#endif
+                #endif
 
-			fixing the above:
-				#ifndef __CYCLE__2__
-				#define __CYCLE__2__
-				// cycle2.h
-				#endif
+            fixing the above:
+                #ifndef __CYCLE__2__
+                #define __CYCLE__2__
+                // cycle2.h
+                #endif
 
-				#ifndef __CYCLE__1__
-				#define __CYCLE__1__
-				// cycle1.h
-				#endif
+                #ifndef __CYCLE__1__
+                #define __CYCLE__1__
+                // cycle1.h
+                #endif
 
 Classes (What we are working with for the next 7 weeks!)
-	Difference between Structs and Classes:
-		Structure:
-			Groups data together.
-		Class:
-			Groups data and routines/methods.
+    Difference between Structs and Classes:
+        Structure:
+            Groups data together.
+        Class:
+            Groups data and routines/methods.
 
-	An object is an instance of a class.
+    An object is an instance of a class.
 
-	e.g.
-		String s; // Class: String, object: s
-		S.length(); // method
-		s.substr(n, m); // method
-		s.c_str(); // method
-		getline(cin, s); // function, not method (not called from an object)
+    e.g.
+        String s; // Class: String, object: s
+        S.length(); // method
+        s.substr(n, m); // method
+        s.c_str(); // method
+        getline(cin, s); // function, not method (not called from an object)
 
-	See 05/rational-class.cpp rational-struct.cpp
-		(The Rational class contains a method that is a separate fuction in the struct example.)
+    See 05/rational-class.cpp rational-struct.cpp
+        (The Rational class contains a method that is a separate fuction in the struct example.)
 
-	"this" keyword refers to the current object, although this is done implicitly and we don't really need to write this.
-		this->field; // inside a method is equivalent to
-		field;
+    "this" keyword refers to the current object, although this is done implicitly and we don't really need to write this.
+        this->field; // inside a method is equivalent to
+        field;
 
-	Operator Overloading
-		We have seen:
-			int x=1, y=2, z;
-			z = x + y;
+    Operator Overloading
+        We have seen:
+            int x=1, y=2, z;
+            z = x + y;
 
-			String a="Hello", b="World", c;
-			c = a + b;
+            String a="Hello", b="World", c;
+            c = a + b;
 
-		'+' is being used in multiple situations! This is called operator overloading.
+        '+' is being used in multiple situations! This is called operator overloading.
 
-		int operator+(const int &x, const int &y); // this is defined by default in C++
+        int operator+(const int &x, const int &y); // this is defined by default in C++
 
-		We can also (re)define '+' for ourselves!
-			See 05/operatorOverload.cc
-				(Overloads +/-/<< operators for our 'Rational' objects.)
+        We can also (re)define '+' for ourselves!
+            See 05/operatorOverload.cc
+                (Overloads +/-/<< operators for our 'Rational' objects.)
 
-				ostream& operator<<(ostream &out, const Rational &r) {
-					out << r.numer << "/" << r.denom;
-					return out; // MUST return out when overloading stream operators!
-				}
+                ostream& operator<<(ostream &out, const Rational &r) {
+                    out << r.numer << "/" << r.denom;
+                    return out; // MUST return out when overloading stream operators!
+                }
 
-	We'll do a bunch of this with the iString question in A3 Due Date 2! But we don't have to do that until the week after the midterm! :D
+    We'll do a bunch of this with the iString question in A3 Due Date 2! But we don't have to do that until the week after the midterm! :D
 
 Other Stuff
-	Review:
-		String streams:
-			Creates an I/O stream, like cin.
-			Therefore stringstreams can replace input streams like cin.
-			Note: we rarely care about the difference between ostringstream/istringstream, because they just restrict us.
+    Review:
+        String streams:
+            Creates an I/O stream, like cin.
+            Therefore stringstreams can replace input streams like cin.
+            Note: we rarely care about the difference between ostringstream/istringstream, because they just restrict us.
 
-			string s;
-			stringstream ss(s);
-			stringstream st("5 10 elephant");
+            string s;
+            stringstream ss(s);
+            stringstream st("5 10 elephant");
 
-			Defining ss doesn't replace cin or cout, it defines a separate stream that we can use however we want.
-				cin >> t; // still works
-				ss >> t; // also works
+            Defining ss doesn't replace cin or cout, it defines a separate stream that we can use however we want.
+                cin >> t; // still works
+                ss >> t; // also works
 
-				while(ss >> t); // reads into t from ss, ignoring spaces, until there is nothing else in the stream.
-					Each call of "ss >> t" reads the first space-delimited string into t. So "5", then "10", then "elephant".
+                while(ss >> t); // reads into t from ss, ignoring spaces, until there is nothing else in the stream.
+                    Each call of "ss >> t" reads the first space-delimited string into t. So "5", then "10", then "elephant".
 
-			Useful stream methods:
-				ss.fail(); // fail flag gets set if something goes wrong
-				ss.eof(); // gets set if end of line is reached
-				ss.clear(); // after failing or EOF, you must clear fail bits
-				ss.ignore(); // ignores the next character in the stream (can also take a parameter to ignore n characters?)
-				ss.peek(); // looks at the next CHARACTER in the stream without actually taking it out of the stream!
-				ss.get(); // ?
+            Useful stream methods:
+                ss.fail(); // fail flag gets set if something goes wrong
+                ss.eof(); // gets set if end of line is reached
+                ss.clear(); // after failing or EOF, you must clear fail bits
+                ss.ignore(); // ignores the next character in the stream (can also take a parameter to ignore n characters?)
+                ss.peek(); // looks at the next CHARACTER in the stream without actually taking it out of the stream!
+                ss.get(); // ?
 
-			getline(istream, string);
-				This looks at the stream you have given it and grabs the entire next line (up until a newline character).
-				If stream looked like "Hello\n there everyone!", "Hello" will be put into string.
+            getline(istream, string);
+                This looks at the stream you have given it and grabs the entire next line (up until a newline character).
+                If stream looked like "Hello\n there everyone!", "Hello" will be put into string.
 
-			See 05/average.cc for a really good example of how to work with getline/stringstreams.
+            See 05/average.cc for a really good example of how to work with getline/stringstreams.
 
 Tip:
-	Recovering files from .snapshot in your UW directory
-	cd .snapshot
+    Recovering files from .snapshot in your UW directory
+    cd .snapshot

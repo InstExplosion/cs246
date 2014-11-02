@@ -1,0 +1,160 @@
+------------------------------------------
+Lecture 15
+
+Singleton Pattern, Encapsulation
+
+Design Pattern: If you have THIS situation then THIS programming technique might help
+
+Singleton Pattern:
+    Restrict class to create only one instance of an object.
+        e.g. Only one connection to a database.
+        e.g. Only one error log.
+    On the assignment: Only creating one scoreboard (A3Q4).
+
+    We have a class c and we want only one instance (object) to be created (throughout the life of the program).
+        e.g. Fincances
+            Wallet: only have one wallet (singleton)
+            Expense: many expenses all accessing the same wallet
+
+            wallet.h:
+                struct Wallet {
+                    static Wallet *sinstance; // No pointer? Won't compile.
+                    static Wallet *getInstance();
+                    Wallet();
+                    int money;
+                    void addMoney(int amount);
+                };
+
+                To make sure only one Wallet object is created, make use of static fields (only one, associated with the entire class).
+                Note: there is no restriction on the ordering of fields/methods within a class.
+                Note: static methods are class-wide, non-static methods are called on instances.
+
+            wallet.cc:
+                Wallet * Wallet::instance = 0; // 0 == NULL
+                Wallet * Wallet::getInstance() {
+                    if(!instance) {
+                        instance = new Wallet;
+                        atexit(cleanup)
+                    }
+                    return instance;
+                }
+                Wallet::Wallet() : money(0) {}
+                void Wallet::addMoney(int amount){
+                    money += amount;
+                }
+                static void::cleanup(){
+                    cout << "called cleanup";
+                    delete instance;
+                }
+
+            expense.h:
+                struct Expense {
+                    const std::string desc;
+                    const int amount;
+                    Wallet *wallet;
+                    Expense(std::string desc, int amount);
+                    void pay();
+                };
+            expense.cc:
+                Expense::Expense(string desc, int amount)
+                    : desc(desc), amount(amount) {
+                        wallet = Wallet::getinstance();
+                }
+                void Expense::Pay() {
+                    wallet->addMoney(-amount);
+                    cout << "Paying " << amount < <endl;
+                }
+
+            see lectures/se/singleton/class-demo
+                (Note that the first Expense instance created creates the first and only Wallet instance)
+                "This is word for word what our Scoreboard class will look like in A3Q4." -NN
+                "Have two instances of the Player class to handle the two players." -NN
+
+            Problem:
+                We create a wallet on the heap, and never delete it. That's a memory leak.
+                We could delete the wallet at exit, but there are programs that keep running outside of main.
+                Wallet may need to be referenced before or after the main function, so we can't always call the destructor ourselves in main.
+                Can't rely on end of main function to delete instance (Wallet).
+
+            Solution:
+                Borrow function from C:
+                    atexit(functionName); // <cstdlib>
+                    // functionName function should have no arguments and a void return type.
+                Can stack up multiple calls to atexit.
+                    Functions will execute in last-in-first-out style, like a stack.
+                    Inside Wallet.cc:
+                        static void::cleanup(){
+                            cout << "called cleanup";
+                            delete instance;
+                        }
+
+                        // above:
+                        instance = new Wallet;
+                        atexit(cleanup);
+
+            To check that memory is cleaned up on the heap, use valgrind.
+
+Tool: Valgrind
+    valgrind ./a.out --- // >> "All heap blocks freed." (for this particular input)
+
+Encapsulation
+    "Make your object a black box and only expose certain features." -NN
+    Keep certain implementation details hidden.
+    Object appears as a black box with some exposed interface which can be used by users.
+
+    e.g.
+        struct Vec {
+            Vec (int x, int y) : x(x), y(y) {}
+            private :
+                int x,y;
+            public:
+                Vec operator+...;
+        };
+
+    x and y are now private.
+        int main() {
+            Vec v(1, 2); // Allowed (default visibility in struct is public).
+            v.x = 5; // Not allowed.
+        }
+        Default visibility inside of a struct is public (if you don't do "private:").
+        Private methods can be called from within the class. So with singleton, make the constructor private and call it with getInstance().
+
+
+    class keyword
+        
+        \o/ - Huzzah!
+         |
+        / \
+
+        Default visibility should be private, so that it makes the programmer think before making something public.
+        C++ introduces the "class" keyword. Default visibility is private.
+
+        class Vec {
+            int x, y;
+            public:
+                Vec(int x, int y);
+                operator+...;
+        };
+
+        Always keep fields private (these are just implementation details).
+        Constructors, destructors, etc. default to PUBLIC still.
+
+        With private fields you can provide users with the field values using public 'getters'.
+            e.g.
+                int Vec::getX() { return x; }
+                int Vec::getY() { return y; }
+
+        To allow others to change values of private fields, you can provide public 'setters'.
+            e.g.
+                void Vec::setX(int _x) { x = _x; }
+                void Vec::setY(int _y) { y = _y; }
+
+            Inside setters, you can still run code to, say, check if the new values are acceptable. This can maintain/enforce class invariants.
+
+    Hide implementation details (including fields) so that you can:
+        - Maintain class invariants.
+        - Change implementation in the future.
+
+    Vec: fields are private.
+    Suppose we don't want to expose get and set methods, but we want to implement the output operator.
+        Answer: next lecture.

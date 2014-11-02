@@ -3,16 +3,16 @@ Lecture 8
 
 Assorted Goodies
 Default Arguments
-	void printSuiteFile(string filename = "mytests.txt") {
-		ifstream myfile(filename.c_str()); // ifstream arg must be a 'C-style string', not string object. (won't compile if only calling with 'filename')
-		string s;
-		while (myfile >> s) {
-			cout << s << endl;
-		}
-	}
+    void printSuiteFile(string filename = "mytests.txt") {
+        ifstream myfile(filename.c_str()); // ifstream arg must be a 'C-style string', not string object. (won't compile if only calling with 'filename')
+        string s;
+        while (myfile >> s) {
+            cout << s << endl;
+        }
+    }
 
 You can get a c style string from std::string using the following:
-	filename.c_str();
+    filename.c_str();
 
 printSuiteFile(); // use the default value
 printSuiteFile("suite.txt"); // use the specified arg
@@ -32,10 +32,10 @@ testParams( , "Montreal"); // not legal
 Overloading (Function Overloading)
 ------------------------------------
 int negate (int a) {
-	return -a;
+    return -a;
 }
 bool negate (bool a) {
-	return !a;
+    return !a;
 }
 -----------------------// in c, this won't compile! Functions must have a unique name.
 
@@ -44,53 +44,53 @@ The C++ compiler looks at the name of the function, number of arguments, and typ
 "What identifies a function is not only its name, but its argument types."
 
 Function Header (Signature)
-	In C++: name + types of arguments
+    In C++: name + types of arguments
 
 In C++, you cannot have two functions that only differ in their return type.
 
 Recall: '<<' operator
-	Actually implemented in C++ as a function:
-		____ operator<<( , ) { ... }
-		int operator<<(int, int) { ... } // returns int
-		istream operator<<(istream, int) { ... } // returns istream "not exactly correct, but we'll get to why soon"
-		ostream operator<<(ostream, string) { ... } // returns ostream
-		"Perfect example of overloading in C++"
-		"Compiler will keep a list of the different function headers"
-		"Well documented in <iostream> stdlib"
+    Actually implemented in C++ as a function:
+        ____ operator<<( , ) { ... }
+        int operator<<(int, int) { ... } // returns int
+        istream operator<<(istream, int) { ... } // returns istream "not exactly correct, but we'll get to why soon"
+        ostream operator<<(ostream, string) { ... } // returns ostream
+        "Perfect example of overloading in C++"
+        "Compiler will keep a list of the different function headers"
+        "Well documented in <iostream> stdlib"
 
 Declaration Before Use
-	In C, we cannot use something before it's declared.
-	Same in C++.
-		This is problematic for mutual recursion (where two functions are calling each other).
+    In C, we cannot use something before it's declared.
+    Same in C++.
+        This is problematic for mutual recursion (where two functions are calling each other).
 
-	Look at:
-	functions/forwardBad.cc
-		Won't compile, because "odd was not declared in this scope".
-		To fix this, forward-declare the odd function (header only).
-	functions/forwardGood.cc
-		bool odd(unsigned int n); // forward declaration (doesn't define the function, but says that it exists).
+    Look at:
+    functions/forwardBad.cc
+        Won't compile, because "odd was not declared in this scope".
+        To fix this, forward-declare the odd function (header only).
+    functions/forwardGood.cc
+        bool odd(unsigned int n); // forward declaration (doesn't define the function, but says that it exists).
 
-	forwardBad.cc does not compile because odd is used before it is declared.
-	To avoid this, add a forward declaration for odd.
-	Saying to the compiler: 'Trust me, you will see a function with this signature.'
-		*You can place default arguments in forward declarations.
+    forwardBad.cc does not compile because odd is used before it is declared.
+    To avoid this, add a forward declaration for odd.
+    Saying to the compiler: 'Trust me, you will see a function with this signature.'
+        *You can place default arguments in forward declarations.
 
-	Declaration before use, NOT definition before use.
-		A declaration is simply an assertion that something exists.
-		A definition is the actual implementation.
-		*You can declare something as many times as you want, but you can define it only once.
-			(There is no benefit to doing multiple declarations, this is just a technicality)
+    Declaration before use, NOT definition before use.
+        A declaration is simply an assertion that something exists.
+        A definition is the actual implementation.
+        *You can declare something as many times as you want, but you can define it only once.
+            (There is no benefit to doing multiple declarations, this is just a technicality)
 
 Pointers
-	int n = 5;
-	int *p = &n; // p is set to the address of n
-	cout << p; // prints 10000 (in hex)
-	cout << *p; // prints the contents of the thing p points to
+    int n = 5;
+    int *p = &n; // p is set to the address of n
+    cout << p; // prints 10000 (in hex)
+    cout << *p; // prints the contents of the thing p points to
 
-	int **pp; // declare a pointer to a pointer to an int
-	pp = &p; // 48000
-	**pp = 10; // dereferences address 48000 and then 10000. 5 mutates to 10.
-		*if(pp) is only false if it doesn't point to an address, is 0 or NULL
+    int **pp; // declare a pointer to a pointer to an int
+    pp = &p; // 48000
+    **pp = 10; // dereferences address 48000 and then 10000. 5 mutates to 10.
+        *if(pp) is only false if it doesn't point to an address, is 0 or NULL
 __________________
 |ADDRESS | STACK |
 -----------------|
@@ -109,79 +109,79 @@ __________________
 ------------------
 
 Arrays
-	int a[] = { 1, 2, 4, 8 };
-	An array is not a pointer!
-	The name of the array is shorthand for the address of the first element of the array.
-	a == &a[0]
-	*a == a[0]
-	*(a + 1) == a[1] // '+' operator accounts for size of typeof(a)
-		Recall that this is called "pointer arithmetic"
+    int a[] = { 1, 2, 4, 8 };
+    An array is not a pointer!
+    The name of the array is shorthand for the address of the first element of the array.
+    a == &a[0]
+    *a == a[0]
+    *(a + 1) == a[1] // '+' operator accounts for size of typeof(a)
+        Recall that this is called "pointer arithmetic"
 
 Structs
-	In C:
-	struct Node {
-		int data;
-		struct Node * next; // You don't need to write 'struct' here in C++ (leaving it in is okay, because backwards compatible)
-	}; // Don't forget the semicolon! You can technically declare global variables of Node (n1, n2, etc.) before the semicolon, so it is needed!
+    In C:
+    struct Node {
+        int data;
+        struct Node * next; // You don't need to write 'struct' here in C++ (leaving it in is okay, because backwards compatible)
+    }; // Don't forget the semicolon! You can technically declare global variables of Node (n1, n2, etc.) before the semicolon, so it is needed!
 
-	In C++:
-	struct Node {
-		int data;
-		Node next;
-	}; // Won't compile. ("Can I determine the size of this node in order to allocate memory? Nope. Four bytes plus size of a Node...")
-	This worked before, because pointers had a fixed size.
+    In C++:
+    struct Node {
+        int data;
+        Node next;
+    }; // Won't compile. ("Can I determine the size of this node in order to allocate memory? Nope. Four bytes plus size of a Node...")
+    This worked before, because pointers had a fixed size.
 
 Constants
-	const int maxGrade = 100; // Told the compiler that maxGrade has value 100 and it won't change.
+    const int maxGrade = 100; // Told the compiler that maxGrade has value 100 and it won't change.
 
-	Rule: a const definition must be initialized (can't just say 'const int maxGrade;') "Must be defined when you declare it."
+    Rule: a const definition must be initialized (can't just say 'const int maxGrade;') "Must be defined when you declare it."
 
-	Constants of other types can also be defined:
-	const Node n = {5, NULL}
-		Cannot change n. n.data = 10; // Won't work.
+    Constants of other types can also be defined:
+    const Node n = {5, NULL}
+        Cannot change n. n.data = 10; // Won't work.
 
-	int n = 5;
-	const int *p = &n; // p is a pointer to a constant int. [a const-int, haha -JR]
-	*I can change p if I want. p=&m; // p is not a constant pointer
-	*I cannot, however, use p to change n. *p = 7; // Won't work.
-	*I can still directly change n. n = 10; // Works.
-	Read backwards: "p is a pointer to an int constant"
-	
-	int * cons p = &n;
-	"p is a constant pointer to an integer"
-	*Now, I can't do p = &m;
-	*Can do *p = 20;
+    int n = 5;
+    const int *p = &n; // p is a pointer to a constant int. [a const-int, haha -JR]
+    *I can change p if I want. p=&m; // p is not a constant pointer
+    *I cannot, however, use p to change n. *p = 7; // Won't work.
+    *I can still directly change n. n = 10; // Works.
+    Read backwards: "p is a pointer to an int constant"
+    
+    int * cons p = &n;
+    "p is a constant pointer to an integer"
+    *Now, I can't do p = &m;
+    *Can do *p = 20;
 
-	const int * const p = &n;
-	*Can't do p = &m;
-	*Can't do *p = 10;
-	*Can still change n directly if it wasn't declared as constant.
+    const int * const p = &n;
+    *Can't do p = &m;
+    *Can't do *p = 10;
+    *Can still change n directly if it wasn't declared as constant.
 
 Parameter Passing "5-10% QUESTION ON MIDTERM!" -NN
-	void increment(int n) {
-		n+=1;
-	}
-	int x=5;
-	increment(x);
-	cout << x; // prints 5
+    void increment(int n) {
+        n+=1;
+    }
+    int x=5;
+    increment(x);
+    cout << x; // prints 5
 
-	Pass by value: a copy of x was created!
+    Pass by value: a copy of x was created!
 
-	void increment(int *n) {
-		*n += 1;
-	}
-	int x=5;
-	increment(&x); // send the address of x
-	cout << x; // prints 6.
+    void increment(int *n) {
+        *n += 1;
+    }
+    int x=5;
+    increment(&x); // send the address of x
+    cout << x; // prints 6.
 
-	*Note that these also count as overloaded functions.
+    *Note that these also count as overloaded functions.
 
 Cliffhanger for next time:
-	scanf("%d", &i); // read an int into variable i
-	We gave the address of i.
-	cin >> i; // reads in a value at i
-	These functions are operators (operator>>(istream, int))
-	Why can I pass it i, not &i?
-	Why not do cin >> (&i); // ?
+    scanf("%d", &i); // read an int into variable i
+    We gave the address of i.
+    cin >> i; // reads in a value at i
+    These functions are operators (operator>>(istream, int))
+    Why can I pass it i, not &i?
+    Why not do cin >> (&i); // ?
 
-	"Pass by reference!" -NN
+    "Pass by reference!" -NN

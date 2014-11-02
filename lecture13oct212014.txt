@@ -90,7 +90,7 @@ Recall separate compilation:
                     }
 
                     This defines ~Node in the scope of Node.
-                    "We still always need include guards in our .h files. We will lose "
+                    "We still always need include guards in our .h files. You will lose marks if we don't." -NN
                     See /lectures/c++/8-classes/separate/
 
                 Use Node:: in .cc files.

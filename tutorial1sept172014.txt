@@ -4,59 +4,59 @@ Tutorial 1
 Kristen Bradley
 Marmoset test problems? cs246@uwaterloo.ca
 Office Hours:
-	WF: 1:30-2:30
-	Th: 2-4
+    WF: 1:30-2:30
+    Th: 2-4
 
 Summary
-	Shell Review
-	I/O Redirection/Piping
-	Regular Expressions and grep
+    Shell Review
+    I/O Redirection/Piping
+    Regular Expressions and grep
 
 Just typing 'cd' returns you to home directory
 'ls' - "let's see"
 sort wordcollection - sorts wordcollection
 sort -r wordCollection | uniq -c
-	prints uniqueness count of each word
+    prints uniqueness count of each word
 head - returns first 10 lines of the file
 tail - returns last 10 lines of the file
-	tail -n 5 for last five words
-	tail -n +5 leaves out last five lines
+    tail -n 5 for last five words
+    tail -n +5 leaves out last five lines
 
 Classic > Redirection
-	./printer > printer.out 2> printer.err
-	./printer > out 2> out   Doesn't work, overwrites first out!
-	./printer 1> out 2>&1    Prints everything, but err is printed first! (Not buffered)
-	./printer >/dev/null
+    ./printer > printer.out 2> printer.err
+    ./printer > out 2> out   Doesn't work, overwrites first out!
+    ./printer 1> out 2>&1    Prints everything, but err is printed first! (Not buffered)
+    ./printer >/dev/null
 
-	Order of redirection matters!
-	./printer 2>&1 1>out	Doesn't redirect err to file, since 1 is currently the screen.
+    Order of redirection matters!
+    ./printer 2>&1 1>out    Doesn't redirect err to file, since 1 is currently the screen.
 
-	sort wordCollection | uniq -c | sort | tail > topten
+    sort wordCollection | uniq -c | sort | tail > topten
 
 Regular Expressions! \o/
-	^ - start of line
-	$ - end of line
-	. - matches any char
-	? - matches previous item 0 or 1
-	* - matches prev item 0 or more
-	+ - matches prev item 1 or more
-	[] - matches one of
-	[^] - matches anything except
-	expr1|expr2 - matches one of expr1 or expr2
+    ^ - start of line
+    $ - end of line
+    . - matches any char
+    ? - matches previous item 0 or 1
+    * - matches prev item 0 or more
+    + - matches prev item 1 or more
+    [] - matches one of
+    [^] - matches anything except
+    expr1|expr2 - matches one of expr1 or expr2
 
-	egrep -n "count" *.c    Finds occurences of 'count' in all files, along with line numbers
-	egrep "^a$" /usr/share/ddict/words
-	egrep "^a.*z$" /usr/share/ddict/words
-	egrep "^a.z$" /usr/share/ddict/words
-	egrep "(^a)|(z$)"	Begins with an 'z' or ends with a 'z'
-	egrep "^[^aeiouAEIOU]*$"
-	egrep "([aeiou].*)([aeiou].*)+"		At least two vowels
-	egrep "^ *count *= *((0)|(1) *; *$" *.c 		Any amount of whitespace within code
+    egrep -n "count" *.c    Finds occurences of 'count' in all files, along with line numbers
+    egrep "^a$" /usr/share/ddict/words
+    egrep "^a.*z$" /usr/share/ddict/words
+    egrep "^a.z$" /usr/share/ddict/words
+    egrep "(^a)|(z$)"    Begins with an 'z' or ends with a 'z'
+    egrep "^[^aeiouAEIOU]*$"
+    egrep "([aeiou].*)([aeiou].*)+"        At least two vowels
+    egrep "^ *count *= *((0)|(1) *; *$" *.c         Any amount of whitespace within code
 
 End-of-lecture tips:
-	:1000		Jumps to line 1000
-	:0			Jumps to top of file
-	:$			Jumps to end of file
-	/int		Search for 'int', navigate with N or SHIFT-N
-	/"a.*z" 	Regular expressions!
-	egrep -i    Ignores cases
+    :1000        Jumps to line 1000
+    :0            Jumps to top of file
+    :$            Jumps to end of file
+    /int        Search for 'int', navigate with N or SHIFT-N
+    /"a.*z"     Regular expressions!
+    egrep -i    Ignores cases

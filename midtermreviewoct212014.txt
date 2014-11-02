@@ -124,44 +124,44 @@ C++
     delete[] cp;
 
     Pointers
-    int n = 42;
-    int * np = 0; // NULL int pointer
-    np = &n;
-    int * np2 = new int; // pointer to an int on the heap
+        int n = 42;
+        int * np = 0; // NULL int pointer
+        np = &n;
+        int * np2 = new int; // pointer to an int on the heap
 
     References
-    Needs to be initialized
-    Can't be uninitialized
-    Don't need to be dereferenced
-    Address it points to cannot be changed
+        Needs to be initialized
+        Can't be uninitialized
+        Don't need to be dereferenced
+        Address it points to cannot be changed
 
     Default Parameters
-    void function(int x = 0, int y = 0); // optional args must be at the end of the parameter list
+        void function(int x = 0, int y = 0); // optional args must be at the end of the parameter list
 
     Overloading
-    We can have multiple functions that have differenct function headers
+        We can have multiple functions that have differenct function headers
 
     int foo(int x);
     int foo(int x, int y = 0); // invalid overload
 
     Operator Overloading
-    >>
-    <<
-    +
-    -
-    =
-    etc...
+        >>
+        <<
+        +
+        -
+        =
+        etc...
 
     Classes
-    Group of related data and methods
-    struct Rational{
-        int numer, denom
-        operator+(const rational &r);
+        Group of related data and methods
+        struct Rational{
+            int numer, denom
+            operator+(const rational &r);
 
     Methods
-    var.method() if var is object
-    var->method() if var is a pointer
-    this
+        var.method() if var is object
+        var->method() if var is a pointer
+        this
 
     Default C constructor s = {1, 2, 3}
 
@@ -206,8 +206,8 @@ C++
         }
 
     Remember the rule of three
-    Copy constructor, destructor, assignment operator
-    Need to implement all three if you encounter non-continuous space
+        Copy constructor, destructor, assignment operator
+        Need to implement all three if you encounter non-continuous space
 
         int x = 5; assignment operator
         int y = x; copy constructor

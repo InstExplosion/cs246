@@ -1,0 +1,20 @@
+-------------------------------
+Tutorial 6
+
+ - Too much stuff.
+
+int *n = new int[0]; // DON'T DO THIS! No memory is actually allocated!
+Instead, do:
+    int *n = 0;
+    int *n = NULL;
+
+Singleton (a design pattern)
+    see database.h, database.cc:
+        struct Database {
+            ...
+            static Database *singleton;
+            static Database *getInstance();
+        }
+
+valgrind -d
+valgrind --leak-check-full

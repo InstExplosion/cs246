@@ -2015,7 +2015,7 @@ Recall separate compilation:
                     }
 
                     This defines ~Node in the scope of Node.
-                    "We still always need include guards in our .h files. We will lose "
+                    "We still always need include guards in our .h files. You will lose marks if we don't." -NN
                     See /lectures/c++/8-classes/separate/
 
                 Use Node:: in .cc files.
@@ -2143,3 +2143,1082 @@ Summary of today's lecture and yesterday's lecture:
         then you usually need to implement all three.
 
 Office hours 2-4:30pm today. 10 minute limit per student if it's busy.
+----------------------------------------------
+Lecture 14
+
+Explicit
+    struct Node {
+        int data;
+        Node *next;
+        Node(int data): data(data), next(0) {}
+    };
+
+    Node n(4); // legal
+    Node n = 4; // also legal
+
+    We have created an implicit conversion from an int to a Node.
+    (These implicit conversions are only valid for single argument constructors.)
+
+    This lets us do:
+        string abc = "hello";
+
+    These are silent conversions, with no error messages.
+
+    int foo(Node n);
+    Node x ... ;
+    f(x); // works
+    f(4); // also works
+
+    To disable the conversion, use the keyword explicit.
+        struct Node {
+            explicit Node(int data): ...
+        };
+        Node n = 4; // raises compiler error
+     
+Arrays of Objects
+    Exactly the same as arrays of structs or arrays of base types.
+    Not tested on the exam: the constructors available to us if we want to create an array of objects.
+    struct Vec {
+        int x,y;
+        Vec(int x, int y): x(x), y(y){}
+    };
+    Vec vectors[10]; // won't compile
+    Vec *vectors = new Vec[10]; // won't compile either
+    We don't have a constructor that takes zero arguments!
+    We don't know how to initialize vectors in an array without a zero argument constructor.
+    OPTION 1: Provide a zero argument constructor.
+        Vec(int x = 0, int y = 0);
+    OPTION 2 (On the stack):
+        Explicitly call the two argument constructor for every element.
+            Vec vectors[3] = {Vec(1,2), Vec(2,3), Vec(3,4)};
+    OPTION 3:
+        On the heap or stack, create an array of pointers to vectors.
+        Vec *vectors[10]; // array of 10 Vec pointers on the stack.
+            Note: To initialize these to NULL, loop through and set them to NULL explicitly.
+        Vec **vectors = new Vec *[10]; // on the heap
+            Note: Not a double pointer, "Vec *" elements. Same syntax as "const char *".
+
+Member Functions vs Standalone Functions
+    (Inside a class vs outside a class)
+
+    Note: operator= is always a member function.
+    When an operator (including operator=) is defined as amember function, the left hand side argument is the "this" pointer.
+        n1 = n2;
+        operator=(const Node &other)
+        "this" is n1
+        other is n2
+        Think about it as "n1.operator=(n2)"
+
+    struct Vec {
+        int x,y;
+        operator+(const Vec &v2) { // our signature has changed, since our standalone operator+ had two arguments
+            Vec v;
+            v.x = x + v2.x;
+            v.y = y + v2.y;
+            return v; // remember that the copy constructor is called here
+        }
+    };
+
+    Alternate implementation:
+    operator+(const Vec &v2) {
+        Vec v(x + v2.x, y + v2.y); // relies on two argument constructor
+        return v;
+    }
+
+    operator= HAS TO be inside, as a member function
+
+    .h file:
+    Vec Vec::operator*(const int k) {
+        return VEc(x * k, y * k);
+    }
+    "Not a standalone function, implementing as a member function of Vec."
+    v1 * k; // v1 is "this", k is argument
+
+    What if we do k * v1?
+    Left hand side k is an integer, not a vector! You can't implement "k * v1" as a member function, it has to be standalone.
+    e.g.
+        Vec operator*(const int k, const Vec &v) {
+            return v * k;
+        }
+
+    Writing the output operator as a method:
+        struct Vec {
+            operator<<(ostream &out){
+                out << x << y << endl;
+                return out;
+            }
+        }
+        Correct usage:
+            Vec v;
+            v << cout;
+            (LHS "this" must always be a vector.)
+            Cascading can cause big issues here:
+                v2 << (v1 << cout)
+            This is ugly. DON'T DO IT.
+        Moral of the story:
+            Input and output operators are always implemented as standalone functions.
+            Define << and >> as standalone functions.
+
+    You must implement the following operators as member functions (methods):
+        operator=
+            Note: We get an operator= for free, so a standalone function would be redundant.
+            This makes sense, since you would have to overwrite the default operator= method to define your own behaviour.
+        operator[] - makes your class act as an array, as in string[0] == 'N'
+        operator* - makes your object act as a pointer
+        operator() - act as a function
+        operatorT() - define an implicit conversion to T
+            e.g. "operatorVoid*"
+
+        "Why? Ask Bjarne. He's the C++ God." -NN
+
+Const is back!
+    int f(const Node &n); // says that we can't modify n's fields
+    Can you call methods on const objects?
+        Yes, as long as the method promises not to change the fields.
+
+    struct Student {
+        int assns, mid, final;
+        float grade() {
+            return assns * 0.4 +
+            mid * 0.2 +
+            final * 0.4;
+        }
+    }
+    const Student s(...);
+    s.grade(); // Can we do this? No. It hasn't promised not to change the fields.
+    To make this promise not to change fields, add const after the argument list.
+    float grade() const { ... }
+
+    Won't compile:
+        struct Student {
+            int assns, mid, final;
+            int methodCalls;
+            float grade() const {
+                methodCalls++;
+                return ...
+            }
+        }
+    C++ to the rescue with the "mutable" keywords:
+        struct Student {
+            int assns, mid, final;
+            mutable int methodCalls;
+            float grade() const {
+                methodCalls++;
+                return ...
+            }
+        }
+
+        "I bet we'll eventually have a const mutable. Then a mutable const mutable. Programmers are never happy. From a theoretical standpoint, mutable is bad. But I guess it's useful" -NN
+
+    In summary:
+        If you have constant objects, they can call constant methods.
+        Non-constant objects can also call const methods.
+
+Static
+    In C:
+        Made variable non-extern (set scope as "local").
+        Also did other things.
+    In C++:
+        Can have static fields:
+            If a field is declared as static, then it is associated with the class and not any specific object.
+            In other words, only one field in memory for all objects of the class.
+            In contrast to non-static fields, where objects each have their own memory.
+
+            struct Student {
+                static int numInstances;
+                struct int(...) {
+                    ++numInstances;
+                }
+            };
+            How is numInstances initialized?
+                Is it initialized to zero by the compiler? No.
+                We don't have space to define numInstances in the class definition, we have only declared it here.
+                We need a defninition of numInstances!
+                numInstances must be defined separately (a file external to the declaration).
+                    In .cc file:
+                        int Student::numInstances; // defined, not initialized (automatically initialized to default of primitive object, in this case 0)
+                        OR, initialize it yourself:
+                        int Student::numInstances = 0; // definition and initialization
+
+    Static Member Functions
+        Functions don't depend on any object of the class.
+        You don't call these on objects of the class.
+        There is no "this" parameter.
+        Note: Calling static member functions "static methods" is technically incorrect, since a method is part of an object. However, "static method" is a commonly used/understood phrase.
+
+        Restrictions on static methods:
+            Static methods can only call other static methods and can only access static fields.
+                struct Student {
+                    static int numInstances;
+                    static void print() {
+                        cout << numInstances;
+                    }
+                }
+            int main () {
+                student ...
+                ...
+                Student::print(); // proper way
+                billy.print(); // also works, but less accurate.
+            }
+------------------------------------------
+Lecture 15
+
+Singleton Pattern, Encapsulation
+
+Design Pattern: If you have THIS situation then THIS programming technique might help
+
+Singleton Pattern:
+    Restrict class to create only one instance of an object.
+        e.g. Only one connection to a database.
+        e.g. Only one error log.
+    On the assignment: Only creating one scoreboard (A3Q4).
+
+    We have a class c and we want only one instance (object) to be created (throughout the life of the program).
+        e.g. Fincances
+            Wallet: only have one wallet (singleton)
+            Expense: many expenses all accessing the same wallet
+
+            wallet.h:
+                struct Wallet {
+                    static Wallet *sinstance; // No pointer? Won't compile.
+                    static Wallet *getInstance();
+                    Wallet();
+                    int money;
+                    void addMoney(int amount);
+                };
+
+                To make sure only one Wallet object is created, make use of static fields (only one, associated with the entire class).
+                Note: there is no restriction on the ordering of fields/methods within a class.
+                Note: static methods are class-wide, non-static methods are called on instances.
+
+            wallet.cc:
+                Wallet * Wallet::instance = 0; // 0 == NULL
+                Wallet * Wallet::getInstance() {
+                    if(!instance) {
+                        instance = new Wallet;
+                        atexit(cleanup)
+                    }
+                    return instance;
+                }
+                Wallet::Wallet() : money(0) {}
+                void Wallet::addMoney(int amount){
+                    money += amount;
+                }
+                static void::cleanup(){
+                    cout << "called cleanup";
+                    delete instance;
+                }
+
+            expense.h:
+                struct Expense {
+                    const std::string desc;
+                    const int amount;
+                    Wallet *wallet;
+                    Expense(std::string desc, int amount);
+                    void pay();
+                };
+            expense.cc:
+                Expense::Expense(string desc, int amount)
+                    : desc(desc), amount(amount) {
+                        wallet = Wallet::getinstance();
+                }
+                void Expense::Pay() {
+                    wallet->addMoney(-amount);
+                    cout << "Paying " << amount < <endl;
+                }
+
+            see lectures/se/singleton/class-demo
+                (Note that the first Expense instance created creates the first and only Wallet instance)
+                "This is word for word what our Scoreboard class will look like in A3Q4." -NN
+                "Have two instances of the Player class to handle the two players." -NN
+
+            Problem:
+                We create a wallet on the heap, and never delete it. That's a memory leak.
+                We could delete the wallet at exit, but there are programs that keep running outside of main.
+                Wallet may need to be referenced before or after the main function, so we can't always call the destructor ourselves in main.
+                Can't rely on end of main function to delete instance (Wallet).
+
+            Solution:
+                Borrow function from C:
+                    atexit(functionName); // <cstdlib>
+                    // functionName function should have no arguments and a void return type.
+                Can stack up multiple calls to atexit.
+                    Functions will execute in last-in-first-out style, like a stack.
+                    Inside Wallet.cc:
+                        static void::cleanup(){
+                            cout << "called cleanup";
+                            delete instance;
+                        }
+
+                        // above:
+                        instance = new Wallet;
+                        atexit(cleanup);
+
+            To check that memory is cleaned up on the heap, use valgrind.
+
+Tool: Valgrind
+    valgrind ./a.out --- // >> "All heap blocks freed." (for this particular input)
+
+Encapsulation
+    "Make your object a black box and only expose certain features." -NN
+    Keep certain implementation details hidden.
+    Object appears as a black box with some exposed interface which can be used by users.
+
+    e.g.
+        struct Vec {
+            Vec (int x, int y) : x(x), y(y) {}
+            private :
+                int x,y;
+            public:
+                Vec operator+...;
+        };
+
+    x and y are now private.
+        int main() {
+            Vec v(1, 2); // Allowed (default visibility in struct is public).
+            v.x = 5; // Not allowed.
+        }
+        Default visibility inside of a struct is public (if you don't do "private:").
+        Private methods can be called from within the class. So with singleton, make the constructor private and call it with getInstance().
+
+
+    class keyword
+        
+        \o/ - Huzzah!
+         |
+        / \
+
+        Default visibility should be private, so that it makes the programmer think before making something public.
+        C++ introduces the "class" keyword. Default visibility is private.
+
+        class Vec {
+            int x, y;
+            public:
+                Vec(int x, int y);
+                operator+...;
+        };
+
+        Always keep fields private (these are just implementation details).
+        Constructors, destructors, etc. default to PUBLIC still.
+
+        With private fields you can provide users with the field values using public 'getters'.
+            e.g.
+                int Vec::getX() { return x; }
+                int Vec::getY() { return y; }
+
+        To allow others to change values of private fields, you can provide public 'setters'.
+            e.g.
+                void Vec::setX(int _x) { x = _x; }
+                void Vec::setY(int _y) { y = _y; }
+
+            Inside setters, you can still run code to, say, check if the new values are acceptable. This can maintain/enforce class invariants.
+
+    Hide implementation details (including fields) so that you can:
+        - Maintain class invariants.
+        - Change implementation in the future.
+
+    Vec: fields are private.
+    Suppose we don't want to expose get and set methods, but we want to implement the output operator.
+        Answer: next lecture.
+---------------------------------------
+Midterm Review
+
+Two Sections:
+    Linux
+    C++
+
+Bread and butter commands
+    ls
+    pwd
+    diff
+    cd
+    egrep
+
+Regular Expressions
+    . ^ * + ? $
+    (expr1 | expr2 | ...)
+    [] one occurence of characters listed
+    [^ ] one occurence of characters except characters listed
+    \ to escape special characters "linux\.student\.cs\.uwaterloo\.ca"
+
+    cs246 or CS246
+        egrep "(cs|CS)246"
+
+    Lines with a 4 eventually followed by a 2
+        egrep "4.*2"
+
+    Begin with any number of fours then any number of twos
+        egrep "^4+2+"
+
+    lines with only a commented out message to cerr
+        egrep "^ *// *(std::)?cerr"
+
+Globbing Patterns
+    * any number of char
+    ? one occurence of any char (like a . in regex)
+    {expr1,expr2} OR statement
+    [] one of the chars
+    [! ] not one of the chars
+
+Difference between regular expressions and globbing expressions:
+    Globbing expressions are used/evaluated within the shell before the command is run.
+    Regular expressions are broader and evaluated by the command (e.g. egrep).
+
+I/O Redirection
+    stdin
+    stdout
+    cerr
+
+    ./myprog <input.txt > output.txt 2> /dev/null
+
+Piping
+    Takes the output of one program and uses it for input of another.
+        egrep "^(...)$" /usr/share/dict/words | egrep "[az]" | wc -w
+
+Bash Scripting
+    -e -r -x -w -d check various permissions
+        -r exists and readable
+
+    -eq -gt -ge -lt -ne compare two integers
+
+    == !=
+
+    echo -n no trailing newline
+
+    #!/bin/bash
+
+    while read line; do
+        count=0
+        for word in ${line}; do
+            count=$(( $count + 1))
+            var=$(( $count % 1))
+            if [ $var -eq 0 ]; then
+                echo -n $word
+            fi
+        done
+        echo ""
+    done < file.txt
+
+    {} are optional, but explicitly outline variable names. I would use them every single time.
+
+C++
+    Expected to know most of everything from CS136
+    if, for, while loops
+    functions
+    various data types
+    pointers
+
+    Strings
+        Must #include <string>
+        .c_str() returns char*
+        .length()
+        .substr(n,m) first index n included, m characters 
+
+    Streams
+        Must #include <iostream>
+        cin, cout, cerr
+
+    #include <sstream>
+    string s = "Hello World";
+    stringstream ss(s);
+    stringstream st("1 2 3 4 5 6");
+    ss.str() returns current contents of stringstream as a string
+
+    #include <fstream>
+    filestream
+
+    string file = "myfile.out";
+    ifstream input("myfile.in");
+    ofilestream output("myfile.out");
+
+    Input Stream
+        stream >> var attempts to read from stream to var
+        s.fail() returns true if the read operation has failed
+        s.clear() sets fail flag to false
+        s.ignore() ignores next char from stream
+        stream.peek() returns next char in stream without removing it
+
+    Dynamic Memory
+
+    MyClass * cp = new MyClass;
+    delete cp;
+    cp = new MyClass[20]; // array of MyClass of size 20
+    delete[] cp;
+
+    Pointers
+        int n = 42;
+        int * np = 0; // NULL int pointer
+        np = &n;
+        int * np2 = new int; // pointer to an int on the heap
+
+    References
+        Needs to be initialized
+        Can't be uninitialized
+        Don't need to be dereferenced
+        Address it points to cannot be changed
+
+    Default Parameters
+        void function(int x = 0, int y = 0); // optional args must be at the end of the parameter list
+
+    Overloading
+        We can have multiple functions that have differenct function headers
+
+    int foo(int x);
+    int foo(int x, int y = 0); // invalid overload
+
+    Operator Overloading
+        >>
+        <<
+        +
+        -
+        =
+        etc...
+
+    Classes
+        Group of related data and methods
+        struct Rational{
+            int numer, denom
+            operator+(const rational &r);
+
+    Methods
+        var.method() if var is object
+        var->method() if var is a pointer
+        this
+
+    Default C constructor s = {1, 2, 3}
+
+    Initialization List
+        Describe the steps that a constructor goes through
+        1. Allocate Space
+        2. Initialize members to default values/initialization list values (in the order they were decalred in)
+        3. Execute constructor body
+    }
+
+    Copy Constructor
+        struct IntClass{
+            int * data;
+
+            IntClass(IntClass &n): data(new int(*(n.data))){}
+        }
+
+        Default is shallow
+
+        [ value = 5 ]  [  value = 5 ]
+        [ next = &B ]  [  next = &B ]
+              |             |
+              :,_           B
+                 "-> [            ]
+
+
+    Know how to write a deep-copy constructor
+
+    Destructor
+
+    Assignment Operator
+
+        IntClass operator=(IntClass &n){
+            if (this == &n)
+                return this;
+            IntClass temp;
+            temp.data = this->data();
+            this->data = new int(*(n.data()))
+            delete temp;
+
+            return *this;
+        }
+
+    Remember the rule of three
+        Copy constructor, destructor, assignment operator
+        Need to implement all three if you encounter non-continuous space
+
+        int x = 5; assignment operator
+        int y = x; copy constructor
+
+    Copy and Swap Idiom
+
+    IntClass& operator=(IntClass n){
+        int * temp = n.data;
+        n.data = this->data;
+        this->data = temp;
+        return *this;
+    } // destructor called on n when out of scope
+    Can the address of n and the address on the left hand side (this) be the same? No.
+    this !== &n
+    n is a copy of the right hand side, and will have a different address
+
+IntClass & operator= (IntClass & n) {
+    IntClass other(n);
+
+    int * temp = other.data;
+    other.data = this->data;
+    this->data = temp;
+
+    return *this;
+}
+------------------------------------------
+Tutorial 1
+
+Kristen Bradley
+Marmoset test problems? cs246@uwaterloo.ca
+Office Hours:
+    WF: 1:30-2:30
+    Th: 2-4
+
+Summary
+    Shell Review
+    I/O Redirection/Piping
+    Regular Expressions and grep
+
+Just typing 'cd' returns you to home directory
+'ls' - "let's see"
+sort wordcollection - sorts wordcollection
+sort -r wordCollection | uniq -c
+    prints uniqueness count of each word
+head - returns first 10 lines of the file
+tail - returns last 10 lines of the file
+    tail -n 5 for last five words
+    tail -n +5 leaves out last five lines
+
+Classic > Redirection
+    ./printer > printer.out 2> printer.err
+    ./printer > out 2> out   Doesn't work, overwrites first out!
+    ./printer 1> out 2>&1    Prints everything, but err is printed first! (Not buffered)
+    ./printer >/dev/null
+
+    Order of redirection matters!
+    ./printer 2>&1 1>out    Doesn't redirect err to file, since 1 is currently the screen.
+
+    sort wordCollection | uniq -c | sort | tail > topten
+
+Regular Expressions! \o/
+    ^ - start of line
+    $ - end of line
+    . - matches any char
+    ? - matches previous item 0 or 1
+    * - matches prev item 0 or more
+    + - matches prev item 1 or more
+    [] - matches one of
+    [^] - matches anything except
+    expr1|expr2 - matches one of expr1 or expr2
+
+    egrep -n "count" *.c    Finds occurences of 'count' in all files, along with line numbers
+    egrep "^a$" /usr/share/ddict/words
+    egrep "^a.*z$" /usr/share/ddict/words
+    egrep "^a.z$" /usr/share/ddict/words
+    egrep "(^a)|(z$)"    Begins with an 'z' or ends with a 'z'
+    egrep "^[^aeiouAEIOU]*$"
+    egrep "([aeiou].*)([aeiou].*)+"        At least two vowels
+    egrep "^ *count *= *((0)|(1) *; *$" *.c         Any amount of whitespace within code
+
+End-of-lecture tips:
+    :1000        Jumps to line 1000
+    :0            Jumps to top of file
+    :$            Jumps to end of file
+    /int        Search for 'int', navigate with N or SHIFT-N
+    /"a.*z"     Regular expressions!
+    egrep -i    Ignores cases
+---------------------------------
+Tutorial 2
+
+    Quotes
+    Shell Scripting
+    Testing
+    C++ I/O
+
+Double quotes - suppress globbing
+    echo "*"
+
+Single quotes - suppresses everything
+    echo '*'
+    'cat word.txt'
+
+Back quotes - running aother command, grab input from another source
+    egrep `cat word.txt` /usr/share/dict/words
+    whereas egrep '`cat word.txt`' /usr/share/dict/words  searched for string "`cat word.txt`"
+    echo "Hello `whoami`. "'Today is `date`' --> "Hello jrrideou. Today is `date`"
+
+Shell Scripts
+    $# number of args
+    $0 name of program
+    $1, $2, ... nth arg
+    $@ all args
+
+    echo "Script name: ${0}"
+    echo "First arg: ${3}"
+    n=4
+    x=n
+    echo "Fourth arg: ${!n}"
+    echo "Fourth arg: ${!4}"
+
+#!/bin/bash
+
+echo "Hello `whaomi`!"
+echo "Today is `date`"
+
+permission will be denied unless chmod, sudo
+run $ bash simple.script
+or $ chmod u+x simple.script
+
+#!/bin/bash
+
+usage(){
+    echo "ERROR" >2
+    exit 1             # 0 means success, 1 is not
+}
+
+if [ ${#} -eq 1 ]; then
+    usage            
+elif [ ${1} -lt 1 ]; then
+    usage
+fi
+
+i=$(( ${1} - 1 ))
+total = ${1}
+while [ "${i}" -gt 1 ]; do                 # square braces must have spaces before/after []
+    total=$(( ${total} * ${i} ))
+    i=$(( ${i} - 1 ))
+done
+echo "${1} factorial is ${total}"         # curly braces required for explicit variable name access ($total. looks for var named "total.")
+
+Testing
+
+Given a program that reads from stdin a list of integers with the goal of determining if the combination of a list of integers can sum to the last integer, (>=0)
+n, x1, ..., xn, y
+(x, ... , xn) is ascending
+Try testing:
+    "large" input
+    large volume input
+    correct solutions (a variety)
+    example solution(s)
+    edge cases (zeros, etc.)
+    target <(sum of all xi)
+    target is less than max but still attainable
+    y is odd but all x are even
+
+C++ IO
+
+Three types of streams:
+    cin (stdin)
+    cout (stdout)
+    cerr (stderr)
+
+Must #include <iostream>
+*There is also an #include <string> library
+
+    cout << "Please choose a number";
+    while (cin >> choice) {
+        // cin needs to be read at least once before it can hit eof or fail
+        if (choice > numChoices)
+            cerr << "Invalid Number" << endl;
+        else
+            cout << phrases[choice-1] << endl;
+    ...
+
+***Print End of Line character at end of program to pass Marmoset tests!!!
+
+vim - can see more things than once
+    :tabedit (navigate with G,T)
+    :vsplit (side by side editing)
+        :split horizontal
+        change with CTRL-W
+    }
+-----------------------------
+Tutorial 3
+
+Strings, Filestreams, Example
+
+#<include <string>
+#include <iostream>
+
+using namespace std;
+int main() {
+    string str = "Over 9000!!!";
+    cout << str[5] << endl;
+    cout << str.at(5) << endl;
+    cout << str.length() << endl;
+    cout << str.size() << endl;
+    cout << str.substr(0,6) << endl; // returns [0-5]
+    cout << str.at(20) << endl; // Throws an exception
+}
+
+Filestreams
+    #Include <fstream>
+using namespace std; // Don't have to say stdstring
+
+int main () {
+    string str1 = "Hello world.";
+    string str("infile");     
+    ifstream ifs(str.c_str()); // "ifs filename must be C-style string" (null terminated)
+    ofstream ofs("outfile");
+    string s;
+    ifs >> s;
+    if (! ifs.fail())
+        for (int i=s.size()-1; i >= 0; --i)
+            ofs << s.at(i);
+        ofs << endl // Tests will fail in marmoset if you don't have end of line chars
+}
+
+Read first n lines of a file and write each number in that file which is divisible by a given number x.
+./divisor
+n
+infile
+x
+outfile
+
+divisorExample.cpp
+// Multiple cins can be on different lines since whitespace is ignored
+getline(instream, lines[i])
+istringstream ss(lines[i])
+
+Test:
+    Negative numbers
+    Test divide by zero
+    Boundary cases
+        Max Number of Lines
+        Max+1 Lines
+        Zero Lines
+    Empty Input File
+    Don't test error cases, just edge/corner cases "Only give our programs valid input"
+
+How do you create an empty file?
+    cat > empty.out
+    then CTRL-D
+    OR
+    touch empty2.out
+
+Vim tips:
+    Copy & Paste
+    V for visual mode, move curser to select
+    Y copy
+    P paste
+    ctrl-v visual block (excel selection)
+    shift-v line selection
+    In command mode: w goes to next word
+        b back to beginning of line
+-------------------------------------------
+Tutorial 4
+
+No assignment the same week as the midterm.
+
+Pointers and References
+Memory Management
+    Should have to use heap-allocated memory for question 6 (not malloc)
+Overloading
+
+int x = 42;
+int *y = &x; // pointer to x
+int &z = x; // reference to x
+
+x == z; // true
+x == y; // false? (the compiler crashes here and stops you from comparing int to ptr)
+&x == y; // true
+z == y; // crash
+&x == &z; // true (comparing the address of x to 'itself')
+
+    "Pointers and integers are incomparable, like ..."
+
+const int *a = &x;
+*a = 20; // nope
+a = &y; // yep (mutating a, not the const int a points to)
+a = &z; // yep
+
+int * const b = &x;
+*b = 10; // yep
+b = &y; // nope
+b = &z; // nope, for two reasons: trying to change what b is pointing to, and z is not an int (while b is a pointer to a _const int_)
+
+Passing things by reference and passing things by value:
+    int foo(int *p, int q, int &r)
+    Arguments are by address, value, and reference, respectively.
+
+    int foo2(const int &r);
+        constant reference
+        prevents copying and prevents changing
+
+        can call foo2(10);
+
+Memory Management
+    Memory stored on the stack
+    invalid.cc:
+        Declared variables become invalid outside of block/function scopes
+
+        Not using malloc/free, we are using new/delete
+
+        int *p = new int; // creates int in the heap
+        ...
+        delete p;
+
+        int *q = new int[10];
+        ...
+        delete[] q;
+
+        valgrind ./a.out
+            analyzes memory use
+
+Overloading Functions
+    int foo(int x, int y);
+
+    Which of these are valid overloads of above?
+        int foo(int x); // yep
+        double foo(int x, int y); // nope (return value is ignored)
+        int foo(double x, int y); // yep
+        int foo(double x, double y); // yep
+        int foo(int x, int y, int z = 7); // it could be called with two ints sometimes, so it doesn't work (ambiguous)
+
+Terminal Tip:
+    Screen
+-------------------------
+Tutorial 5
+
+Midterm is next Thursday!
+    It's usually a difficult midterm! (But the final is usually easier)
+    Bash and C++ both on the midterm.
+    Multiple choice and T/F questions - very tricky, really need to know your stuff.
+    Coding questions
+    Difficult midterm is meant to be difficult so that you step up your game. Sorry :(
+
+tutorials/05
+    Preprocessor
+    Classes
+    Other stuff
+
+Preprocessor
+    #include < >
+    #include " "
+    #define MAX 10
+    #ifdef variable
+    #endif
+
+    IMPORTANT (for include guards):
+        #ifndef
+        #endif
+
+    Include Guards:
+        Prevents 'cyclical inclusion'. (See 05/cycle1.h cycle2.h)
+            e.g.
+                cycle1.h:
+                    #include "cycle2.h"
+                
+                cycle2.h:
+                    #include "cycle1.h"
+
+        ALL of our .h files should have include guards.
+        Instructors have explicitly asked TAs to deduct marks if we forget include guards.
+            e.g.
+                #ifndef __VAR__NAME__
+                #define __VAR__NAME__
+
+                #endif
+
+            fixing the above:
+                #ifndef __CYCLE__2__
+                #define __CYCLE__2__
+                // cycle2.h
+                #endif
+
+                #ifndef __CYCLE__1__
+                #define __CYCLE__1__
+                // cycle1.h
+                #endif
+
+Classes (What we are working with for the next 7 weeks!)
+    Difference between Structs and Classes:
+        Structure:
+            Groups data together.
+        Class:
+            Groups data and routines/methods.
+
+    An object is an instance of a class.
+
+    e.g.
+        String s; // Class: String, object: s
+        S.length(); // method
+        s.substr(n, m); // method
+        s.c_str(); // method
+        getline(cin, s); // function, not method (not called from an object)
+
+    See 05/rational-class.cpp rational-struct.cpp
+        (The Rational class contains a method that is a separate fuction in the struct example.)
+
+    "this" keyword refers to the current object, although this is done implicitly and we don't really need to write this.
+        this->field; // inside a method is equivalent to
+        field;
+
+    Operator Overloading
+        We have seen:
+            int x=1, y=2, z;
+            z = x + y;
+
+            String a="Hello", b="World", c;
+            c = a + b;
+
+        '+' is being used in multiple situations! This is called operator overloading.
+
+        int operator+(const int &x, const int &y); // this is defined by default in C++
+
+        We can also (re)define '+' for ourselves!
+            See 05/operatorOverload.cc
+                (Overloads +/-/<< operators for our 'Rational' objects.)
+
+                ostream& operator<<(ostream &out, const Rational &r) {
+                    out << r.numer << "/" << r.denom;
+                    return out; // MUST return out when overloading stream operators!
+                }
+
+    We'll do a bunch of this with the iString question in A3 Due Date 2! But we don't have to do that until the week after the midterm! :D
+
+Other Stuff
+    Review:
+        String streams:
+            Creates an I/O stream, like cin.
+            Therefore stringstreams can replace input streams like cin.
+            Note: we rarely care about the difference between ostringstream/istringstream, because they just restrict us.
+
+            string s;
+            stringstream ss(s);
+            stringstream st("5 10 elephant");
+
+            Defining ss doesn't replace cin or cout, it defines a separate stream that we can use however we want.
+                cin >> t; // still works
+                ss >> t; // also works
+
+                while(ss >> t); // reads into t from ss, ignoring spaces, until there is nothing else in the stream.
+                    Each call of "ss >> t" reads the first space-delimited string into t. So "5", then "10", then "elephant".
+
+            Useful stream methods:
+                ss.fail(); // fail flag gets set if something goes wrong
+                ss.eof(); // gets set if end of line is reached
+                ss.clear(); // after failing or EOF, you must clear fail bits
+                ss.ignore(); // ignores the next character in the stream (can also take a parameter to ignore n characters?)
+                ss.peek(); // looks at the next CHARACTER in the stream without actually taking it out of the stream!
+                ss.get(); // ?
+
+            getline(istream, string);
+                This looks at the stream you have given it and grabs the entire next line (up until a newline character).
+                If stream looked like "Hello\n there everyone!", "Hello" will be put into string.
+
+            See 05/average.cc for a really good example of how to work with getline/stringstreams.
+
+Tip:
+    Recovering files from .snapshot in your UW directory
+    cd .snapshot
+-------------------------------
+Tutorial 6
+
+ - Too much stuff.
+
+int *n = new int[0]; // DON'T DO THIS! No memory is actually allocated!
+Instead, do:
+    int *n = 0;
+    int *n = NULL;
+
+Singleton (a design pattern)
+    see database.h, database.cc:
+        struct Database {
+            ...
+            static Database *singleton;
+            static Database *getInstance();
+        }
+
+valgrind -d
+valgrind --leak-check-full

@@ -4,173 +4,173 @@ Lecture 11
 Note: Office hours moved to Wednesday 12-1:30 today.
 
 Recall: Preprocessor
-	Preprocessor Directives:
-		#include
-		#define VAR VALUE
-			This is useful for conditional compilation.
-		#define VAR
-			The default VALUE is the empty string.
-		#ifndef VAR
-	Compile Time Preprocessor Args:
-		g++ -DDEBUG
-	Examples:
-		preprocessor/define.cc
-		preprocessor/debug.cc
-	#if 0
-		...
-		Code not forwarded to the compiler.
-		Fancy way to comment things out!
-		...
-	#endif
+    Preprocessor Directives:
+        #include
+        #define VAR VALUE
+            This is useful for conditional compilation.
+        #define VAR
+            The default VALUE is the empty string.
+        #ifndef VAR
+    Compile Time Preprocessor Args:
+        g++ -DDEBUG
+    Examples:
+        preprocessor/define.cc
+        preprocessor/debug.cc
+    #if 0
+        ...
+        Code not forwarded to the compiler.
+        Fancy way to comment things out!
+        ...
+    #endif
 
 Separate Compilation
-	Break our implementation into:
-		1. Interface files (.h files)
-			Contains type definitions (struct Node, etc.), function headers.
-		2. Implementation file (.cc file)
-			Contains implementation of functions.
+    Break our implementation into:
+        1. Interface files (.h files)
+            Contains type definitions (struct Node, etc.), function headers.
+        2. Implementation file (.cc file)
+            Contains implementation of functions.
 
-	separate/example1:
-	vector.h:
-		struct Vec {
-			int x;
-			int y;
-		}
+    separate/example1:
+    vector.h:
+        struct Vec {
+            int x;
+            int y;
+        }
 
-		Vec operator+( ... );
+        Vec operator+( ... );
 
-	main.cc:
-		#include "vector.h"
-			// All the compiler needs to know is that an implementation for vector exists.
+    main.cc:
+        #include "vector.h"
+            // All the compiler needs to know is that an implementation for vector exists.
 
-	vector.cc:
-		#include "vector.h"
-		Vec operator+( ... ) { ... }
-			// Sees the type def for Vec in vector.h
+    vector.cc:
+        #include "vector.h"
+        Vec operator+( ... ) { ... }
+            // Sees the type def for Vec in vector.h
 
-	This separation is important in case someone wants to change the definition of "struct Vec". Having it defined in only one place is important.
+    This separation is important in case someone wants to change the definition of "struct Vec". Having it defined in only one place is important.
 
-	To compile:
-		g++ main.cc vector.cc
-		g++ *.cc
-			This only works if your directory is well-organized.
+    To compile:
+        g++ main.cc vector.cc
+        g++ *.cc
+            This only works if your directory is well-organized.
 
-	Note that .h files aren't to be compiled. Never compile header files, they are meant to be included (and then compiled) in .cc files.
-		Compiling a .h will result in a .h.gch, a compiler header that takes priority over your other .h files. This will cause problems.
-	Note: Never include .cc files.
+    Note that .h files aren't to be compiled. Never compile header files, they are meant to be included (and then compiled) in .cc files.
+        Compiling a .h will result in a .h.gch, a compiler header that takes priority over your other .h files. This will cause problems.
+    Note: Never include .cc files.
 
-	If you are building a huge video game and change one character, you don't want to have to change that character's definition all over the project.
-	Separate compilation is about being able to compile individual pieces of a program and then combine them.
-		This also helps for debugging. You can compile individual .cc files for debugging output instead of comiling the whole project.
-		Error "ld": Linker error. Valid C++, but no defined main function is seen by g++.
-			We can't compile separate pieces by default. g++ tries to compile AND link and produce an executable by default.
-			g++ -c vector.cc
-				This works, and outputs vector.o by default.
-			g++ main.cc
-			g++ vector.o main.o
-			./a.out
+    If you are building a huge video game and change one character, you don't want to have to change that character's definition all over the project.
+    Separate compilation is about being able to compile individual pieces of a program and then combine them.
+        This also helps for debugging. You can compile individual .cc files for debugging output instead of comiling the whole project.
+        Error "ld": Linker error. Valid C++, but no defined main function is seen by g++.
+            We can't compile separate pieces by default. g++ tries to compile AND link and produce an executable by default.
+            g++ -c vector.cc
+                This works, and outputs vector.o by default.
+            g++ main.cc
+            g++ vector.o main.o
+            ./a.out
 
-		.o file is an object file.
-			Contains:
-				Binary for compiled code.
-				Information about what is needed to link (what is available and what is missing).
+        .o file is an object file.
+            Contains:
+                Binary for compiled code.
+                Information about what is needed to link (what is available and what is missing).
 
-		vector.o:
-			Says we need operator+ implementation, and we need main.
+        vector.o:
+            Says we need operator+ implementation, and we need main.
 
-		main.o:
-			Says we have main, and we need operator+ implementation for Vec.
+        main.o:
+            Says we have main, and we need operator+ implementation for Vec.
 
-		Invoke the linker by giving all of the object files:
-			g++ vector.o main.o
-				Here, the linker is like a match-maker. It makes sure the needs of each object is met.
+        Invoke the linker by giving all of the object files:
+            g++ vector.o main.o
+                Here, the linker is like a match-maker. It makes sure the needs of each object is met.
 
-			This is separate compilation. If main.cc is changed, simply recompile main.cc and compile using the new main.o.
+            This is separate compilation. If main.cc is changed, simply recompile main.cc and compile using the new main.o.
 
-	Dealing with Global Variables when Using Separate Compilation:
-		File abc.h:
-			int globalVar; // declaration AND definition.
-				Any .cc file that includes abc.h has a globalVar variable.
-				When you compile this .cc file, the .o file will say "I have a variable called globalVar".
-					The linker will recognize all of the .cc files including abc.h saying that they have globalVar variable.
-					Linker will complain: You cannot have a var with the same name.
+    Dealing with Global Variables when Using Separate Compilation:
+        File abc.h:
+            int globalVar; // declaration AND definition.
+                Any .cc file that includes abc.h has a globalVar variable.
+                When you compile this .cc file, the .o file will say "I have a variable called globalVar".
+                    The linker will recognize all of the .cc files including abc.h saying that they have globalVar variable.
+                    Linker will complain: You cannot have a var with the same name.
 
-		Solution:
-			1. Move definition to abc.cc:
-				int globalVar;
-				// Since we never include .cc files, abc.o will be the only one with a definition of globalVar
-			2. We need a way to declare but not define this elsewhere. In abc.h:
-				extern int globalVar; // "Somebody will define globalVar somewhere."
-				// "Forward declaration of vector.h"
+        Solution:
+            1. Move definition to abc.cc:
+                int globalVar;
+                // Since we never include .cc files, abc.o will be the only one with a definition of globalVar
+            2. We need a way to declare but not define this elsewhere. In abc.h:
+                extern int globalVar; // "Somebody will define globalVar somewhere."
+                // "Forward declaration of vector.h"
 
-		See separate/example2/
+        See separate/example2/
 
-	separate/example3/
-		g++ *.cc
-		Compiler error: redefinition of 'struct Vec'.
-			Both linearAlg.h and linearAlg.h contain "#include vector.h".
-			linAlg.cc includes both of these .h files, so it sees two definitions of vec.
+    separate/example3/
+        g++ *.cc
+        Compiler error: redefinition of 'struct Vec'.
+            Both linearAlg.h and linearAlg.h contain "#include vector.h".
+            linAlg.cc includes both of these .h files, so it sees two definitions of vec.
 
-		To fix this:
-			1. Don't include vector.h twice. This is hard to keep track of though.
-			This is the very reason why we talked about the preprocessor!
+        To fix this:
+            1. Don't include vector.h twice. This is hard to keep track of though.
+            This is the very reason why we talked about the preprocessor!
 
-			2. Use include guards.
-				vector.h:
-					#ifndef __VECTOR_H__
-					#define __VECTOR_H__
+            2. Use include guards.
+                vector.h:
+                    #ifndef __VECTOR_H__
+                    #define __VECTOR_H__
 
-					struct Vec { ... };
-					Vec operator+( ... ){ ... };
-					#endif
+                    struct Vec { ... };
+                    Vec operator+( ... ){ ... };
+                    #endif
 
-					This prevents the inclusion of the same piece of code multiple times.
-				
-				Advice: Always have include guards in .h files.
-					In CS246: This will give us handmarking marks!
-					In real world: This is good practice!
-				More advice: Never use "using namespace std;" in header files. All .cc files that include that .h would be forced to use that namespace!
-					Always refer to cout as std::cout, cin as std::cin, string as std::string, etc.
-					Maybe somebody wants to implement a String type in their .cc file.
-					We CAN use the namespace in our implementation.
+                    This prevents the inclusion of the same piece of code multiple times.
+                
+                Advice: Always have include guards in .h files.
+                    In CS246: This will give us handmarking marks!
+                    In real world: This is good practice!
+                More advice: Never use "using namespace std;" in header files. All .cc files that include that .h would be forced to use that namespace!
+                    Always refer to cout as std::cout, cin as std::cin, string as std::string, etc.
+                    Maybe somebody wants to implement a String type in their .cc file.
+                    We CAN use the namespace in our implementation.
 
 Classes
-	The big idea behind Object-Oriented Programming (OOP) is that you can put functions inside of structs.
-	e.g.
-		Struct Student {
-			int assns, mt, final;
-			float grade () {
-				return 0.4*assn + 0.2*mt + 0.4*final;
-			}
-		};
+    The big idea behind Object-Oriented Programming (OOP) is that you can put functions inside of structs.
+    e.g.
+        Struct Student {
+            int assns, mt, final;
+            float grade () {
+                return 0.4*assn + 0.2*mt + 0.4*final;
+            }
+        };
 
-		This is a struct with a function in it. A class!
+        This is a struct with a function in it. A class!
 
-		Create the student:
-			Student s = {80, 55, 70};
-		Call the grade function:
-			s.grade();
+        Create the student:
+            Student s = {80, 55, 70};
+        Call the grade function:
+            s.grade();
 
-			We are calling a function that is defined inside a struct.
+            We are calling a function that is defined inside a struct.
 
-	A class is a struct that can contain functions.
-		All C++ structs can contain functions, so they are all classes!
-		"class" keyword exists: We will talk about this later.
-		For now, when we say "class", we are talking about a struct with functions.
+    A class is a struct that can contain functions.
+        All C++ structs can contain functions, so they are all classes!
+        "class" keyword exists: We will talk about this later.
+        For now, when we say "class", we are talking about a struct with functions.
 
-	An instance of a class is called an object.
-		Above, 's' is the object and 'Student' is the class.
+    An instance of a class is called an object.
+        Above, 's' is the object and 'Student' is the class.
 
-	A function residing insed a class is called a member function or a method.
+    A function residing insed a class is called a member function or a method.
 
-	In grade() above, we use FIELDS of the struct instead of local variables.
-		This method is using variable names it has not declared.
-		This structure definition does not reserve any memory, it just says what it means to be a student.
-		What do assns, mt, final refer to in grade()?
-			They refer to the assns, mt, and final for the object on which grade was called.
-			They are the fields of the current object.
-				Student s = {80,55,70};
-				s.grade(); // assn, mt, final marks of s
+    In grade() above, we use FIELDS of the struct instead of local variables.
+        This method is using variable names it has not declared.
+        This structure definition does not reserve any memory, it just says what it means to be a student.
+        What do assns, mt, final refer to in grade()?
+            They refer to the assns, mt, and final for the object on which grade was called.
+            They are the fields of the current object.
+                Student s = {80,55,70};
+                s.grade(); // assn, mt, final marks of s
 
-				Student billy = {80, 70, 90};
-				billy.grade(); // billy's grades are used
+                Student billy = {80, 70, 90};
+                billy.grade(); // billy's grades are used

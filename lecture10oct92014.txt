@@ -3,254 +3,254 @@ Lecture 10
 
 Memory Operations / The Preprocessor
 
-	A function that returns a node:
+    A function that returns a node:
 
-		Node getMeANode() {
-			Node n;
-			return n;
-		}
+        Node getMeANode() {
+            Node n;
+            return n;
+        }
 
-		This is problematic since node n is allocated in getMeANode's stack frame and must be copied to the caller's frame.
-		This is inefficient. (Although it is critical for us to perform that inefficient copy here, to avoid data loss)
+        This is problematic since node n is allocated in getMeANode's stack frame and must be copied to the caller's frame.
+        This is inefficient. (Although it is critical for us to perform that inefficient copy here, to avoid data loss)
 
-	If you instead return a pointer to a stack-allocated variable, really bad things happen.
-	e.g.
+    If you instead return a pointer to a stack-allocated variable, really bad things happen.
+    e.g.
 
-		Node *getMeANode() {
-			Node n;
-			return &n;
-		}
+        Node *getMeANode() {
+            Node n;
+            return &n;
+        }
 
-		This causes a 'dangling pointer'. You should NEVER do this.
-		Returning a reference is equally bad, since it's referencing a variable that becomes lost.
+        This causes a 'dangling pointer'. You should NEVER do this.
+        Returning a reference is equally bad, since it's referencing a variable that becomes lost.
 
-	Create the node on the heap:
+    Create the node on the heap:
 
-		Node *getMeANode() {
-			Node *np = new Node;
-			return np;
-		}
+        Node *getMeANode() {
+            Node *np = new Node;
+            return np;
+        }
 
-		np, the node pointer, gets copied to the callers frame (this is efficient, since pointers are only 4 bytes). This suppresses the copy of the data structure.
+        np, the node pointer, gets copied to the callers frame (this is efficient, since pointers are only 4 bytes). This suppresses the copy of the data structure.
 
-		*Caller must keep track of the returned pointer and eventually free the memory.
+        *Caller must keep track of the returned pointer and eventually free the memory.
 
-		main() {
-			getMeANode(); // Bad! Doesn't store the returned pointer, so we can't free the memory.
-		}
+        main() {
+            getMeANode(); // Bad! Doesn't store the returned pointer, so we can't free the memory.
+        }
 
 
 Operator Overloading
 
-	e.g.
-		negate(int);
-		negate(bool);
+    e.g.
+        negate(int);
+        negate(bool);
 
-		<< and >> operators are overloaded (streams and I/O stuff, etc.)
+        << and >> operators are overloaded (streams and I/O stuff, etc.)
 
-		+ is overloaded (arithmetic and string concatenation, etc.)
+        + is overloaded (arithmetic and string concatenation, etc.)
 
-	General Idea:
-		We can give meanings to C++ operators for the types we define.
-		e.g.
+    General Idea:
+        We can give meanings to C++ operators for the types we define.
+        e.g.
 
-			struct Vector{
-				int x,y;
-			}
+            struct Vector{
+                int x,y;
+            }
 
-			We could write an addition function:
+            We could write an addition function:
 
-				Vector add(vec v1, vec v2) { ... }
-				Vector v1 = { ... };
-				Vector v2 = { ... };
-				Vector v3 = add(v1, v2);
+                Vector add(vec v1, vec v2) { ... }
+                Vector v1 = { ... };
+                Vector v2 = { ... };
+                Vector v3 = add(v1, v2);
 
-				But this is ugly and awkward to implement.
-					Note that the behaviour behind creating a new vector (v3) from the existing returned vector is complex, and we'll get to this in another lecture.
+                But this is ugly and awkward to implement.
+                    Note that the behaviour behind creating a new vector (v3) from the existing returned vector is complex, and we'll get to this in another lecture.
 
-			Instead, let's overload the + operator:
+            Instead, let's overload the + operator:
 
-				operator+(const Vector &v1, const Vector &v2) {
-					Vector v;
-					v.x = v1.x + v2.x;
-					v.y = v1.y + v2.y;
-					return v;
-				}
+                operator+(const Vector &v1, const Vector &v2) {
+                    Vector v;
+                    v.x = v1.x + v2.x;
+                    v.y = v1.y + v2.y;
+                    return v;
+                }
 
-				Since our new header definition is unique, it is a valid overload.
-				This can now be used with "V1 + V2" (where V1 and V2 are references).
-					Note that this specific example is overloading a pre-defined C++ operator; we can also do this with our own functions.
+                Since our new header definition is unique, it is a valid overload.
+                This can now be used with "V1 + V2" (where V1 and V2 are references).
+                    Note that this specific example is overloading a pre-defined C++ operator; we can also do this with our own functions.
 
-			What if we want to do "Vec v4 = 3 * v3" or "Vec v5 = v3 * 3" ? This requires TWO overloads, for each new LHS/RHS behaviour of '*'.
+            What if we want to do "Vec v4 = 3 * v3" or "Vec v5 = v3 * 3" ? This requires TWO overloads, for each new LHS/RHS behaviour of '*'.
 
-				Vector operator*(const int k, const Vector &r) {
-					// by convention we pass ints by value, since a reference is just 4 bytes anyways.
-					// Remember to use const arguments whenever possible, this can earn marks in the hand-marking of our code.
-					
-					Vector toRet;
-					toRet.x = k*v.x;
-					toRet.y = k*v.y;
-					return toRet;
-				}
+                Vector operator*(const int k, const Vector &r) {
+                    // by convention we pass ints by value, since a reference is just 4 bytes anyways.
+                    // Remember to use const arguments whenever possible, this can earn marks in the hand-marking of our code.
+                    
+                    Vector toRet;
+                    toRet.x = k*v.x;
+                    toRet.y = k*v.y;
+                    return toRet;
+                }
 
-				Vector operator*(const Vec &r, const int k) {
-					return k*v; // takes advantage of our other definition. Yay!
-				}
+                Vector operator*(const Vec &r, const int k) {
+                    return k*v; // takes advantage of our other definition. Yay!
+                }
 
-				Update svn and look at lectures/c++/x-operators/
+                Update svn and look at lectures/c++/x-operators/
 
-			Let's also show an overloading of << and >>
+            Let's also show an overloading of << and >>
 
-				Struct Grade {
-					int theGrade;
-				}
+                Struct Grade {
+                    int theGrade;
+                }
 
-				This seems silly, since we could just use an int.
-				BUT this lets us tell the compiler we're dealing with our own type, and lets us define overloads specific to grades.
-					Note that we don't talk about typedefs in this course. "We don't talk about that, it would pollute your minds." -NN
+                This seems silly, since we could just use an int.
+                BUT this lets us tell the compiler we're dealing with our own type, and lets us define overloads specific to grades.
+                    Note that we don't talk about typedefs in this course. "We don't talk about that, it would pollute your minds." -NN
 
-				operator<<(ostream &out, const Grade &g) {
-					// we don't want a const ostream, because we will set error flags if something goes wrong, etc. You can never really const an istream.
+                operator<<(ostream &out, const Grade &g) {
+                    // we don't want a const ostream, because we will set error flags if something goes wrong, etc. You can never really const an istream.
 
-					out << g.theGrade << "%";
-					return out; // follows the chaining convention of <<
-					// DON'T return cout here, bad things would happen.
-				}
+                    out << g.theGrade << "%";
+                    return out; // follows the chaining convention of <<
+                    // DON'T return cout here, bad things would happen.
+                }
 
-				Note that we could use g now to output a stream to any other streams we can think of.
-					e.g.
-						cout << g;
-						ofstream << g;
+                Note that we could use g now to output a stream to any other streams we can think of.
+                    e.g.
+                        cout << g;
+                        ofstream << g;
 
-				We could define special Grade behaviour in the future. Like how the university caps your grade at 100% (and stops it from dropping below 0 :P)
+                We could define special Grade behaviour in the future. Like how the university caps your grade at 100% (and stops it from dropping below 0 :P)
 
-				istream &operator>>(istream &in, Grade &g) {
-					in >> g.theGrade;
-					if (g.theGrade < 0) g.theGrade = 0;
-					if (g.theGrade > 100) g.theGrade = 100;
-					return in;
-				}
+                istream &operator>>(istream &in, Grade &g) {
+                    in >> g.theGrade;
+                    if (g.theGrade < 0) g.theGrade = 0;
+                    if (g.theGrade > 100) g.theGrade = 100;
+                    return in;
+                }
 
-				We are assuming that the LHS of the operator is already a Grade number.
-				
-				cin >> g1 >> g2;
-				cin >> g1 >> g2;
+                We are assuming that the LHS of the operator is already a Grade number.
+                
+                cin >> g1 >> g2;
+                cin >> g1 >> g2;
 
 Warning: one of the questions (the last one?) in Assignment 3 is very labour-intensive for writing test cases.
-	You may want to write a script to do this, or sit two people down and play through to create test cases.
+    You may want to write a script to do this, or sit two people down and play through to create test cases.
 
 Preprocessor
-	
-	Source Code --> Preprocessor --> New Source Code --> C++ Compiler
+    
+    Source Code --> Preprocessor --> New Source Code --> C++ Compiler
 
-	The preprocessor is the first thing that sees your source code.
+    The preprocessor is the first thing that sees your source code.
 
-	You are already using it.
-		#include is a preprocessor directive.
-			It says 'find the file specified and paste it right here in the code'.
+    You are already using it.
+        #include is a preprocessor directive.
+            It says 'find the file specified and paste it right here in the code'.
 
-		e.g.
-			#include <iostream>
-				This pastes iostream into your code.
-				It looks in the standard C++ library (/usr/include/c++/lib ?)
+        e.g.
+            #include <iostream>
+                This pastes iostream into your code.
+                It looks in the standard C++ library (/usr/include/c++/lib ?)
 
-		Alternatively,
-			#include "vecotr.cc"
-				This looks for files in this directory and pastes it in.
+        Alternatively,
+            #include "vecotr.cc"
+                This looks for files in this directory and pastes it in.
 
-		"This is pretty straightforward stuff, the preprocessor isn't very smart." -NN
+        "This is pretty straightforward stuff, the preprocessor isn't very smart." -NN
 
-	The define directive:
-		#define VAR value
-			This creates a preprocessor variable and initializes it to a value.
-			e.g.
-				#define MAX 10
-				int array[MAX];
+    The define directive:
+        #define VAR value
+            This creates a preprocessor variable and initializes it to a value.
+            e.g.
+                #define MAX 10
+                int array[MAX];
 
-		define is essentially a 'search and replace' function.
-		Remember that this happens before the compiler even sees anything.
-		The compiler will see "int array[10];"
+        define is essentially a 'search and replace' function.
+        Remember that this happens before the compiler even sees anything.
+        The compiler will see "int array[10];"
 
-		This behaviour predates const.
-		Now, languages have cosnts.
-		It is often encouraged to use built-in language consts instead of #define, but #define is not completely useless.
-		This simple search-and-replace strategy is actually quite powerful.
+        This behaviour predates const.
+        Now, languages have cosnts.
+        It is often encouraged to use built-in language consts instead of #define, but #define is not completely useless.
+        This simple search-and-replace strategy is actually quite powerful.
 
-		You can do some really cool/weird stuff with the preprocessor.
-		e.g.
-			#define ever ;;
-			for (ever) {
-				// infinite loop :D
-			}
+        You can do some really cool/weird stuff with the preprocessor.
+        e.g.
+            #define ever ;;
+            for (ever) {
+                // infinite loop :D
+            }
 
-		This is fun for making convoluted code. There are ways to output what the preprocessor outputs and play with this.
-		We could technically change how C++ code looks completely, if we do "#define while for" etc.
-		"PLEASE DON'T EVER DO THIS, THE TAs WILL HATE YOU." -NN
-		lol -JR
+        This is fun for making convoluted code. There are ways to output what the preprocessor outputs and play with this.
+        We could technically change how C++ code looks completely, if we do "#define while for" etc.
+        "PLEASE DON'T EVER DO THIS, THE TAs WILL HATE YOU." -NN
+        lol -JR
 
-		Real-world use:
-			Defined constants can be used for conditional compilation.
-			If we want to write code that works on Unix and Windows, we have problems.
-				Unix C++ applications need "int main(){ ... }"
-				Windows native applications need "int WinMain(){ ... }"
+        Real-world use:
+            Defined constants can be used for conditional compilation.
+            If we want to write code that works on Unix and Windows, we have problems.
+                Unix C++ applications need "int main(){ ... }"
+                Windows native applications need "int WinMain(){ ... }"
 
-				We could write two separate codebases...
-				OR we could write one codebase that is compiled in two different ways!
-				Defined constants are one tool that lets us do this.
+                We could write two separate codebases...
+                OR we could write one codebase that is compiled in two different ways!
+                Defined constants are one tool that lets us do this.
 
-				e.g.
-					#define UNIX 1
-					#define WINDOWS 2
-					
-					#define OS UNIX
+                e.g.
+                    #define UNIX 1
+                    #define WINDOWS 2
+                    
+                    #define OS UNIX
 
-					#if OS == UNIX
-					 int main(){
-					#elif OS == WINDOWS
-					 int WinMain(){
-					#endif
+                    #if OS == UNIX
+                     int main(){
+                    #elif OS == WINDOWS
+                     int WinMain(){
+                    #endif
 
-				We are only touching on this very briefly. You will probably see in the industry (on co-op) how it's done.
+                We are only touching on this very briefly. You will probably see in the industry (on co-op) how it's done.
 
-				Q: I compiled a C++ program with main on Windows. How?
-				A: It was probably not a _native_ Windows application.
+                Q: I compiled a C++ program with main on Windows. How?
+                A: It was probably not a _native_ Windows application.
 
-			We don't want to have to change "#define OS ..." every time!
-				We can instead use Compiler Arguments.
-				"Compiler arguments to the rescue!" -NN
+            We don't want to have to change "#define OS ..." every time!
+                We can instead use Compiler Arguments.
+                "Compiler arguments to the rescue!" -NN
 
-				define.cc:
-					main() {
-						cout << X << endl;
-					}
+                define.cc:
+                    main() {
+                        cout << X << endl;
+                    }
 
-					This wont compile, X is not defined.
+                    This wont compile, X is not defined.
 
-					g++ -DX=15 define.cc
-					./a.out
-					15
+                    g++ -DX=15 define.cc
+                    ./a.out
+                    15
 
-					It works with compiler arguments!
-					-D is for preprocessor variables
-					We can do
-						g++ -DOS=UNIX ...
-							This sets OS to UNIX
+                    It works with compiler arguments!
+                    -D is for preprocessor variables
+                    We can do
+                        g++ -DOS=UNIX ...
+                            This sets OS to UNIX
 
-			Note how many different architectures there are nowadays: Win32, Solaris, iOS, etc.
+            Note how many different architectures there are nowadays: Win32, Solaris, iOS, etc.
 
-			That will involve a lot of #if #elif usage.
+            That will involve a lot of #if #elif usage.
 
-	#define VAR
-		This creates VAR, with a value set to the empty string.
-	#ifdef VAR
-		This condition is true if VAR is defined.
-	#ifndef VAR
-		This condition is true if VAR isn't defined.
+    #define VAR
+        This creates VAR, with a value set to the empty string.
+    #ifdef VAR
+        This condition is true if VAR is defined.
+    #ifndef VAR
+        This condition is true if VAR isn't defined.
 
-		These can be used for debugging!
-		Add a bunch of cout statements that can be removed automatically before submitting to Marmoset!
+        These can be used for debugging!
+        Add a bunch of cout statements that can be removed automatically before submitting to Marmoset!
 
-		Look at lectures/c++/6-preprocess/debug.cc for an example of this.
-			DEBUG is not defined in this code, and then there are #ifdef statements.
-			g++ -DDEBUG=1 debug.cc
-			This will be REALLY useful for the big question on A3 or on our project.
+        Look at lectures/c++/6-preprocess/debug.cc for an example of this.
+            DEBUG is not defined in this code, and then there are #ifdef statements.
+            g++ -DDEBUG=1 debug.cc
+            This will be REALLY useful for the big question on A3 or on our project.

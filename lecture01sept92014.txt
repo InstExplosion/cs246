@@ -4,91 +4,91 @@ Lecture 1 (September 9 2014)
 ------------------------------------------
 
 Nomair ("Numer[ical]") Naeem
-	Also taught: CS241 'baby compilers course', CS444 'advanced compilers course'
-	nanaeem@uwaterloo.ca 'prefer not to get emails for general course-related questions'
+    Also taught: CS241 'baby compilers course', CS444 'advanced compilers course'
+    nanaeem@uwaterloo.ca 'prefer not to get emails for general course-related questions'
 
 Course Breakdown:
-	Final Exam - 40% - 2.5 hours
-	Midterm - 20% - October 23rd - 4:30-6:20 (typical average 55-65% 'nice wake up call')
-	Assignment - 40% - Six of them - A0 already out, worth no marks, prereq for future marks
-		A1-A4 - worth 7% each, done individually
-		A5 - worth 12%, small-medium sized project in groups of two, partner doesn't have to be in same section (same time frame as typical assignment, ~2 weeks)
+    Final Exam - 40% - 2.5 hours
+    Midterm - 20% - October 23rd - 4:30-6:20 (typical average 55-65% 'nice wake up call')
+    Assignment - 40% - Six of them - A0 already out, worth no marks, prereq for future marks
+        A1-A4 - worth 7% each, done individually
+        A5 - worth 12%, small-medium sized project in groups of two, partner doesn't have to be in same section (same time frame as typical assignment, ~2 weeks)
 
-		Two due dates - end of first week, end of second week
-		Using Marmoset
-		ISA: Kristen Bradley
-		Tutorials: 'not compulsory, but encouraged', none in first week
-		Lab hours in week 1: help for a0, MC 2062/2063, email cs246@uwaterloo.ca for help, 10-12, 2-3
-		Piazza: monitor daily, check for already answered questions
-		Reference materials: textbook not required, no course notes
-		Academic integrity: 'do not cheat', 0% on assignment and -5% on course mark
-		Welcome to second year: assignments get more difficult, longer description, less spoon-feeding, READ QUESTIONS MULTIPLE TIMES, no solutions provided
+        Two due dates - end of first week, end of second week
+        Using Marmoset
+        ISA: Kristen Bradley
+        Tutorials: 'not compulsory, but encouraged', none in first week
+        Lab hours in week 1: help for a0, MC 2062/2063, email cs246@uwaterloo.ca for help, 10-12, 2-3
+        Piazza: monitor daily, check for already answered questions
+        Reference materials: textbook not required, no course notes
+        Academic integrity: 'do not cheat', 0% on assignment and -5% on course mark
+        Welcome to second year: assignments get more difficult, longer description, less spoon-feeding, READ QUESTIONS MULTIPLE TIMES, no solutions provided
 
-	You must use a *nix environment or SSH+WinSCP or Cygwin
-	Use the cs136 virtual box (works fine until a3), not recommended
-	MANAGE YOUR TIME
+    You must use a *nix environment or SSH+WinSCP or Cygwin
+    Use the cs136 virtual box (works fine until a3), not recommended
+    MANAGE YOUR TIME
 
 4 MODULES
-	1 - Introduction to Unix Shell (2-3 weeks)
-	2 - C++ 03 'Object Oriented Software Development' (10 weeks)
-	3 - Tools
-	4 - Software Engineering Principals
+    1 - Introduction to Unix Shell (2-3 weeks)
+    2 - C++ 03 'Object Oriented Software Development' (10 weeks)
+    3 - Tools
+    4 - Software Engineering Principals
 
 Module 1: Linux Shell
-	interactive environment  - an interface to the Operating System
-	Shell: how we get the OS to do "things" for us.
-	Two kinds of shells:
-		- Graphical
-		- Text-based (command line)
+    interactive environment  - an interface to the Operating System
+    Shell: how we get the OS to do "things" for us.
+    Two kinds of shells:
+        - Graphical
+        - Text-based (command line)
 
-	1. Graphical (eg. Windows, OSX, Gnome, KDE)
-		+ Intuitive to use
-		+ Mouse clicks
-		+ Drag and drop
-		- harder (difficult) to do less common tasks (eg. batch-renaming of files ending in cpp to cc)
+    1. Graphical (eg. Windows, OSX, Gnome, KDE)
+        + Intuitive to use
+        + Mouse clicks
+        + Drag and drop
+        - harder (difficult) to do less common tasks (eg. batch-renaming of files ending in cpp to cc)
 
-	2. Command Line Shell
-		Interface to unix/linux environment
-		Even Windows has a command-line shell (DOS)
-		+ Much more powerful
-		- Must learn basic commands (steep learning curve)
+    2. Command Line Shell
+        Interface to unix/linux environment
+        Even Windows has a command-line shell (DOS)
+        + Much more powerful
+        - Must learn basic commands (steep learning curve)
 
-	History of UNIX Shell:
-		Linux has its roots in the original unix OS (70s)
-			- The original unix had a command line shell ("Shell", "BourneShell" to differentiate)
-			- Written by Stephen Bourne
-		Other Shells:
-			- CShell (csh)
-			- KornShell (ksh)
-		These shells also evolved
-			- csh became tcsh
-			- BourneShell became BourneAgainShell (BASH)
-		Command: echo $0
-			> 'bash' ($>) or 'tcsh' (%>)
+    History of UNIX Shell:
+        Linux has its roots in the original unix OS (70s)
+            - The original unix had a command line shell ("Shell", "BourneShell" to differentiate)
+            - Written by Stephen Bourne
+        Other Shells:
+            - CShell (csh)
+            - KornShell (ksh)
+        These shells also evolved
+            - csh became tcsh
+            - BourneShell became BourneAgainShell (BASH)
+        Command: echo $0
+            > 'bash' ($>) or 'tcsh' (%>)
 
-	Linux File System
-		- Contains files
-			- files (data/programs) 'ordinary files'
-			- directory (can contain other files) 'just like folders in Windows'
-			/
-				bin/
-					bash/
-					ls/
-					cd/
-				etc/		(configuration files)
-					shells
-				home/
-					nanaeem/
-						cs241/
-						cs246/
-				usr/		
-					bin/	(user programs)
-					include/	(C headers are located)
-		- Root of the tree structure is a dir called '/'
-		- Can have two files with identical names as long as they are in different directories
-		- We can specify any file by giving its path
-		- '/bin' means 'bin' directory inside '/' directory
-		- '/user/bin' - bin directory inside the 'usr' directory inside the '/' directory
-		- Current Directory:
-			- The directory we are currently in
-			- Command 'pwd' (present working directory) outputs current directory
+    Linux File System
+        - Contains files
+            - files (data/programs) 'ordinary files'
+            - directory (can contain other files) 'just like folders in Windows'
+            /
+                bin/
+                    bash/
+                    ls/
+                    cd/
+                etc/        (configuration files)
+                    shells
+                home/
+                    nanaeem/
+                        cs241/
+                        cs246/
+                usr/        
+                    bin/    (user programs)
+                    include/    (C headers are located)
+        - Root of the tree structure is a dir called '/'
+        - Can have two files with identical names as long as they are in different directories
+        - We can specify any file by giving its path
+        - '/bin' means 'bin' directory inside '/' directory
+        - '/user/bin' - bin directory inside the 'usr' directory inside the '/' directory
+        - Current Directory:
+            - The directory we are currently in
+            - Command 'pwd' (present working directory) outputs current directory
