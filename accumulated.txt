@@ -2520,6 +2520,1128 @@ Encapsulation
     Vec: fields are private.
     Suppose we don't want to expose get and set methods, but we want to implement the output operator.
         Answer: next lecture.
+----------------------------------------------------------
+I missed this lecture.
+Notes typed by Anna Lorimer, revised by me for formatting:
+----------------------------------------------------------
+Lecture 16: October 30 2014
+
+Announcements:
+    Good News: 
+        Nomair has candy today. AND HE'S GONNA GET US TIMBITS SOMETIME (to bribe us to come to class).
+        He needs people to recommend music for him to play at the beginning of class (NOT top 40 in the last 5 years).
+    Bad News:
+        Midterms have been marked.
+        The Average: 59%
+        But it was harder than last term (the average last term was 62%).
+
+Recall: Last time we discussed the class keyword
+    Vec with private x,y fields and no public get or set methods. Implement operator<<. 
+
+    ostream &operator<<(ostream &out, const Vec &v) {
+        cout<<v.x<<" "<<v.y;
+        return out;
+    }
+
+    This can be implemented this way because x and y are private. 
+    So we want to provide encapsulation, be we also want to be able to make an exception
+        The 'friend' keyword (this is on assignment 4).
+
+    Note: Friend is useful for input and output operators.
+
+    class Vec {
+        int x,y; // private by default
+        public:
+            friend std::ostream &operator<<(std::ostream &, const Vec &); // 'operator<<' is NOT a method. 
+    }
+    
+    What this says is: "this is what it means to be a vector and operator<< is my friend so it has access to all my private parts".
+    Once the 'friend' keyword has been added, the implementation above compiles 
+
+    There is no friendship qualifier that gives ONLY read access.
+        By adding 'friend' you are breaking encapsulation. So if that friend is an ass they might break everything.  
+
+    You can make a class a friend of another class. 
+
+    Advice: "Unlike real life, have as few friends as possible".
+        Because it does break encapsulation which was the whole point behind the 'private' keyword.
+
+    Note: Public methods can access private fields.
+
+System Modelling:
+
+    Even with limited knowledge of C++ we can design relatively complex programs
+    We're better off designing something and them implementing it.
+
+    When designing: 
+        1. What are the abstractions in my program? 
+            -a.k.a What classes will I have? 
+        2. Relationship between classes 
+
+    We will discuss the difference kinds of relationships 
+
+    There are formal methods to specify the design of a system
+        We will use UML (Unified Modelling Language)
+
+    UML is an amalgatmation of a bunch of standards (it's huuuuge) 
+
+    A UML class is a box:
+
+    -----------------
+    |Vec            | ->name of class (NOT OPTIONAL)
+    -----------------
+    | - x: Integer  | ->fields (optional)
+    | + y: Integer  |        not all fields need to be written (- == private, + == private)
+    -----------------
+    |  - setX       | -> methods (optional)
+    |  + getX       |
+    -----------------
+
+    Relationship 1: Composition
+ 
+        class Vec {
+            int x,y,z; // private fields
+            public:
+            Vec(int x, int y, int z): x(x), y(y), z(z) {}
+        };
+
+        Let's say we want to define what a plane is. 
+
+        class Plane  {
+            Vec v1,v2;
+        };
+
+        This is composition because you are embedding objects inside of objects
+
+        Note: If in your main code you do
+            main () {
+                Plane P; 
+            }
+            this won't compile because the default constructor for Plane will run, this runs the default construct for Vec which has been overwritten. 
+
+    To fix this:
+        Option 1: Provide a default constructor (meh)
+        Option 2: Create a constructor for Plane which calls the non-default constructor for Vec. (YEH)
+
+        e.g. 
+            class Plane {
+                Vec v1,v2;
+                public:
+                Plane(): v1(2,3,4), v2(5,6,7) {} // now Plane P; in main compiles 
+            }                  \      /
+                                \    /
+                                 \  /
+                      calls 3 parameter constructor
+
+
+    Back to composition:
+
+    Composition is embeding an obejct (e.g. Vec) inside another object (e.g. Plane)
+    This is also called an "owns a " relationship  (as in Plane owns Vector)
+
+    When is this useful? Some guidelines: 
+        If A "owns a" B, then B has no existence outside A 
+        If A is destroyed B is destroyed 
+        If A is copied, B is copied
+
+        e.g. A cars "owns a " wheels 
+
+    "owns a" in UML:
+
+    -----------          -------------
+    | Plane    | ∆->     | Vec       | (delta is a shaded diamond)
+    ------------         -------------
+    | ...      |         | -x        |
+    ------------         | -y        |
+                         | -z        |
+                         -------------
+
+    Relationship 2: Agregation
+        
+        e.g. A catalog has car parts. These parts exist outside a catalog; destroying or copying catalog has no effect on parts.
+
+    This is a "has a" relationship 
+
+    Agregation is implemented through using pointers to objects  inside another object
+
+    e.g. Pond "has a" ducks.
+        
+        class Pond {
+            Duck *ducks[20];
+        };
+
+
+    A key challenge is deciding between agregation an composition
+
+    Agregation in UML:
+
+    ------------        -------------
+    | Pond     | ∆->    | Duck      | (delta is a hollow diamond)
+    ------------        -------------
+    | ...      |        | -x        |
+    ------------         -------------
+
+    Relationship 3: Inheritance 
+
+    All code is available in the repository
+
+    e.g. Track my collection of books (c++/inheritance/example1)
+        
+        class Book {
+            string title, author;
+            int numPages;
+            public:
+                Book(string title, string author, int numPages) {...}
+        };
+
+        What if we want to also partition our books into textbooks, comic book etc. and keep unique information for each type of book? 
+
+        class TextBooks {
+            string title, author;
+            int numPages;
+            string topic;
+        };
+
+        class ComicBooks {
+            string title, author;
+            int numPages;
+            string protag; //progtagoniast of comic books
+        };
+
+        Now we can represent general books, textbooks and comic books. We want an array(collection), but we don't want 3 different arrays...
+
+    There are two ways we can represent 3 different types in an array
+        In C:
+            Option 1: 'union'. 
+                    union Booktype{ 
+                            Book *b;
+                            TextBook *tb;        ]->creates an array of booktypes
+                            ComicBook *cb;
+                    }
+
+                    BookType myBooks[20];
+            
+                this is a bad option because you need to track what each element contains 
+
+            Option 2: Array of void*
+                but you still need to track extra information
+                also, you could place a types that isn't a book 
+                this is acutally worse than using union
+
+    We can use inheritance to create a book hierarchy 
+
+    e.g. class Book is unchanged. 
+
+        A textbook "is a" book with an additinal field, so is ComicBook
+
+        class TextBook: public Book { //textbook inherits from book; textbook is a book
+            string topic;
+        };
+
+        class ComicBook: public Book {
+            string protag;
+        };
+
+        TextBook and ComicBook inherit title, author and numPages from Book. 
+
+    Book is the base class or the superclass
+        TextBook and ComicBook are the derived class or the subclass 
+
+    Note: TEXTBOOK OBJECTS HAVE 4 FIELDS: 3 INHERITED AND 1 NEW FIELD (same for comic).
+        We can call on a Text/ComicBook object any public method that we could call on a book object
+
+    TextBook inherited title, author and numPages; these were private in Book
+        TextBook objects cannot access them! (can't assign or read)
+        If I can't access them how the hell can you initialize them in the constructor?
+---------------------------------------
+Lecture 17
+
+Inheritance, Virtual Keyword
+
+Recap:
+    class Book {
+        string title, author;
+        int numPages;
+        public:
+        Book(string title, string author, int numPages) :...
+        bool isItHeavy() {return numPages > 300; }
+        string getAuthor() { return author; }
+        void setAuthor(string auth) { author = auth; }
+    }
+
+    class Textbook : public Book {
+        string topic;
+        public:
+        Textbook(string title, string author, int numPages, string topic);
+    }
+
+
+    int main() {
+        TextBook tb ...;
+        tb.author = ...; // Not allowed
+        tb.getAuthor(); // allowed
+    }
+
+    TextBook::TextBook( ____, ____, ____, ____)
+        : title(title), author(author), numPages(numPages), topic(topic) {} // Doesn't compile.
+        // Title, author, numPages are private.
+        // When an object is created:
+        //  - Space is allocated
+        //  - Superclass part of the object is constructed (this looks for default zero-argument constructor of Book)
+        //  - Field constructors run / member initialization list
+        //  - Constructor body
+        // No default (zero-argument) constructor exists for Book
+
+    TextBook::TextBook(string title, string author, int numPages, string topic):
+        Book(title, author, numPages), topic(topic) {}
+        // You need to use the member initialization list to call the non-default constructor for your superclass.
+
+    Lesson:
+        If the superclass does not have a default constructor, call a non-default constructor in the MIL.
+
+    See /inheritance/example1
+    "I highly recommend looking through all of these examples." -NN
+
+If the superclass has private members, the subclass cannot access them.
+    If you want access to superclass fields, make the superclass fields protected.
+    Fields or methods that are protected are accessible to the subclasses (still not accessible to outsiders).
+    "If you are an instance of the subclass, then you really have an instance of the superclass as well." -NN
+
+Example of using protected:
+    class Book {
+        protected:
+        string title, author;
+        int numPages;
+        public:
+        ...
+    };
+
+    class TextBook : public Book {
+        string topic;
+        void setAuthor(string auth) { author = auth; }
+    }
+
+    int main () {
+        TextBook tb('','','','');
+        tb.author = "----"; // Won't work. Author would have to be public.
+        // TextBook has access to protected author, but only within TextBook's inner code.
+    }
+
+Protected breaks encapsulation.
+    If we don't want Book's author to ever be Shakespeare, we can't stop TextBook from subverting this limitation on the protected field.
+    No way to protect class invariants.
+    Advice:
+        Private fields, protected get/set methods.
+        This doesn't break class invariance, because you have written these get/set methods.
+
+Inheritance creates a "IS A" relationship.
+    Recall:
+        "OWNS A" embeds object
+        "HAS A" pointer to an object, aggregation
+
+    TextBook inherits from a Book. TextBook IS A Book, a Comic IS A Book.
+
+         [Book ]
+          __|__
+         |     |
+  [Textbook] [ Comic  ]
+  [ (topic)] [(protag)]
+
+Motivation for virtual keyword:
+    Book is considered heavy if it's > 300 pages.
+    TextBook is considered heavy if it's > 500 pages.
+    Comic is considered heavy if it's > 30 pages.
+
+    class Book {
+        // usual fields
+        public:
+        bool isItHeavy() { return numPages > 300; }
+        getNumPages() { return numPages; }
+    };
+
+    "Override the isItHeavy method. This requires a public accessor method in the superclass."
+
+    class TextBook : public Book {
+        public:
+        bool isItHeavy() {
+            return getNumPages > 500;
+        }
+    };
+    
+    class Comic : public Book {
+        public:
+        bool isItHeavy() { return getNumPages() > 30; }
+    };
+
+    Book b("book", "myauthor", 50);
+    b.isItHeavy(); // false
+    Comic cb("mycomic", mycomicauthor", 40, "batman");
+    cb.isItHeavy(); // true
+
+    "Objects have a 'Vtable' full of pointers to their methods in memory.
+     So where we have an instance of Comic, Book's isItHeavy function exists
+     in memory but cb's Vtable doesn't point to it."
+
+     What happens if we do this?:
+        Book b2 = Comic("mycomic", "mycomicauthor", 40, "batman");
+        b2.isItHeavy(); // What do?
+
+        Two options:
+            1. Book::isItHeavy runs --> false // This is what happens. The compiler's not smart enough.
+            2. Comic::isItHeavy runs --> true
+
+   Book              Comic  
+[  title  ]       [  title   ]
+[ author  ]       [  author  ]
+[numPages ]       [ numPages ]
+                  [ protag   ]
+
+When you assign a subclass object to a superclass object, the object is sliced (fields are chopped off). This creates a possible memory leak!
+    Comic has been coerced into a Book
+    Superclass methods will be called.
+
+    Q: Why would we want to do this?
+    A: If we want to declare an array of Books, we can still store Comic books in it.
+
+    "It comes down to casting."
+
+    Q: Can we cast Comics into TextBooks?
+    A: _         _
+        \_(O_O)_/     "..." -NN
+
+    Comic cb(dontcare, dontcare, 40, dontcare);
+    Book *pB = &cb;
+    Comic *pcB = &cb;
+    pCB->isItHeavy(); // true
+    pb->isItHeavy(); // false // Book's isItHeavy runs.
+    When you are talking about pointers, no coersion occurs.
+    Superclass pointer to a subclass object does NOT slice the object.
+
+Lesson: If we acces an object through a superclass pointer, the superclass method runs (even though there is no slicing).
+    The compiler uses the type of the pointer (or reference) to decide which method to call.
+        - Does NOT consider the actual type of the object.
+        - That's a problem.
+        - An array of Books would run the Book::isItHeavy method on everything in the array! :(
+
+    We would like to refer to different Books using Book pointers (or references), and still call the customized subclass method.
+    We want the most customized method to run. 
+
+    "EVERYTHING that is true for pointers is true for references."
+
+Using virtual:
+    class Book {
+        public:
+        virtual bool isItHeavy() {...}
+    };
+    class TextBook/Comic NO CHANGE
+    Only the superclass method needs to be declared virtual.
+
+    Comic cb(dontcare, dontcare, 40, dontcare);
+    Book *pB = &cb;
+    Comic *pcB = &cb;
+    pCB->isItHeavy(); // true (obviously, Comic book's method runs)
+    pb->isItHeavy(); // true "Virtual? Yup. I'll look at the type of the object." - Compiler
+
+Virtual Method:
+    Chooses which method to run based on the type of the actual type of the object.
+    The runtime type of the object is used.
+        The decsion of what method is called is made when the program is executing, not by the compiler. You pay a small performance penalty.
+        Note that this only works with a pointer to the object.
+    "It goes all the way down. Even if you have a SpecialComics class."
+    The process of finding the method using the runtime type of an object is called dynamic dispatch.
+        Every Java method is virtual by default, so you get dynamic dispatch by default.
+        There are ways to do this in the compiler, but that's for CS 744.
+
+    /example4
+        Books *collection[20];
+        ...
+        ... // Book, Comic, or TextBooks
+        ...
+        for (int i = 0; i < 20; i++) {
+            collection[i]->isItHeavy()  // ith element of the array, a Book pointer
+        }
+
+        This array accomodates multiple types under one abstraction.
+         - POLYMORPHISM
+            The ability to accomodate multiple types in one abstraction. Explain the virtual keyword. Get job.
+
+    Destructors
+        See /example5
+            X *xp = new Y(5, 10);
+            delete xp;
+            // Memory has leaked
+            Make X's destructor virtual.
+----------------------------------------------
+Lecture 18
+
+Make, 2D Arrays, abstract
+
+"We have an array of topics to cover today." -NN :P
+
+Make was covered in the last tutorial. See the examples if you didn't attend/understand.
+    make is a linux utility that takes the burdon of keeping track of changed files.
+    makefiles have targets, dependencies, and recipes.
+        target: main.o
+        dependencies: main.cc book.h textbook.h comic.h
+        recipe: g++ -c main.cc
+
+        Corresponding makefile line:
+
+            main.o: main.cc book.h textbook.h comic.h
+            [TAB]recipe: g++ -c main.cc
+
+            What do we need to create main() ?
+
+                     [main]
+                       |
+     ,-------------:-----------:------------,
+    /              |           |             \
+[main.o]       [book.o]   [textbook.o]   [comic.o]
+                /  \
+        [book.cc] [book.o]
+
+    Note: make looks at the file's modification timestamp, as seen when running "ls -l".
+    The hard part here is coming up with all of the dependencies.
+        We can do this automatically with g++ -MMD
+        .PHONY specifies that a given ":something" is not a target file, but a command to be run "make something".
+        .PHONY: clean
+        clean:
+            ---
+        Look at the last example Makefile that's been posted. We have made it as general as possible.
+        Just copy and paste this example Makefile and change the OBJECTS line near the top for your Marmoset Makefiles. :)
+            Make sure you understand what this file does, though.
+
+2D Array
+    "We (the profs) decided to cover this topic in class because there has been some confusion, and it's necessary for A4's 'Flood It' question." -NN
+
+    Stack allocated 2D array:
+        int a[10][5]; // 10 rows, 5 columns
+        a[i][j] // ith row, jth column
+        // *(*(a + i) + j)
+        // Useful function header: "foo(int a[][], int i, int j);"
+        ________________
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        ````````````````
+
+    Heap allocated 2D array:
+        int *a[10]; // An array of int pointers.
+        a[0] = new int[5];
+        a[1] = new int[5];
+        // loop through a[i] to initialize these if you want
+        // make sure to loop through and delete it all after you're done
+        // Rule: Postfix before Prefix /* Read right to left -JR */
+        // Aside: int (*a)[10]; // pointer to an array
+        // Note: hardcoded numbers like "10" above should be avoided, set it to a variable.
+
+        int *a[10]      new int [5]
+         ______      ______________
+        [    --]--->[  |  |  |  |  ]  
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        ````````    ````````````````
+
+        OR:
+            int **a;
+            a = new int *[10];
+            for (int i = 0; i < 10; i++) { // nested loop to initialize
+                a[i] = new int[5];
+                for (int j = 0; j < 5; j++) {
+                    cin>>a[i][j]; // initialize to stdin (can be whatever)
+                }
+            }
+            for (int i = 0; i < 10; i++) {
+                delete [] a[i]; // deletes second dimension of array
+                delete [] a; // deletes first dimension of array
+            }
+
+Back to our discussion of inheritance:
+    Recall that we were previously only concerned with Student's grades.
+    What if we are Needles Hall and want to compute a Student's fees instead? But there are both regular and co-op Students...
+
+    class Student {
+        ...
+        protected:
+        int numCourses;
+        public:
+        virtual int fees(); // allows us to specify the computation based on the type of Student
+    }
+
+    class Regular : public Student {
+        ...
+        public:
+        int fees() {return 700 * numCourses; }
+        ...
+    };
+
+    class Coop : public Student {
+        ...
+        public:
+        int fees() {return 1300*numCourses; }
+    };
+
+
+    Note that the fees method has no implementation in the Student superclass. This incomplete implementation won't compile.
+    What should Student::fees do?
+    Students are either Regular or Coop, there is no other option.
+    Therefore, we DON'T want an implementation.
+    Note: we DO need to specify a virtual method in the superclass in order for polymorphism to work.
+        e.g.
+            Student *students[400];
+            for(...) {
+                students[i]->fees(); // Students superclass needs a virtual fees method.
+            }
+
+    We get this to compile by having a 'pure virtual' method (a method with no implementation).
+        Note: This is a vague definition of pure virtual, but it's all we need to know for now.
+    class Student {
+        ...
+        protected:
+        int numCourses;
+        public:
+        virtual int fees() = 0; // Pure virtual method
+    };
+
+    BUT this means that any class which has at least one pure virtual method CANNOT BE INSTANTIATED. It is abstract.
+        Student s; // Won't work now.
+        Note: The Student.cc file therefore shouldn't exist. But there's an exception to this that we'll get to later. /* Sigh... -JR */
+
+    Any instance of a child class of Student will use dynamic dispatch to determine the most customized implementation of fees.
+        Note: Dynamic dispatch is a common buzzword in interviews. /* Google this later. -JR */
+
+    Any class that inherits from an abstract class is also abstract, unless all inherited pure virtual methods are implemented.
+
+    A class with no pure virtual method is called a 'concrete class'.
+        Every class we've seen so far in the course is a concrete class.
+
+    Uses of abstract classes:
+        - Enable polymorphism
+        - Share common fields
+
+UML Recap:
+    "I'm told that the UML references we've provided are long and tedious." -NN
+    
+    virtual / pure virtual methods are written in <i>italics</i>.
+      If our typography isn't obvious, do "*in italics" or something at the bottom of the page, etc. This is just to help the marker.
+    abstract classes - name in italics
+    static - underline
+        -private +public #protected
+
+    Q: How do you write arrays in UML?
+    A: Just add square brackets (assuming it's variable sized), like :integer []
+       "I need to double check the array notation, I'll let you know if this answer changes." -NN
+
+Up next: 4 design patterns, two of which are 99.99% necessary for your final project.
+
+Observer Pattern
+    We have a "Publish - Subscribe" model.
+    One class is the publisher/Subject and generates data.
+    Another class is the subscriber/Observer and ingests/consumes/uses the generated information.
+
+    e.g.
+        Cells in a spreadsheet: Subject (publisher)
+        Graph/plot of cells: Observer (automatically updates based on changes in observed cells)
+
+    "Whenever the subject changes, it notifies any observers of changes." -NN
+
+    See /observer/ObserverUML.pdf
+        <i>AbstractSubject</i>
+            +attach(Observer *)   "Keep a list of observer to notify."
+            +detach(Observer *)
+            +notifyObservers()
+
+        <i>AbstractObserver</i>
+            <i>+notify()</i>
+
+        ConcreteSubject
+            +getState()  "Specifies the change that just happened. What just happened?"
+
+        ConcreteObserver  "Like a spreadsheet cell."
+            +notify()     "Something happened, but I won't tell you what exactly."
+                          "When the observer is notified, it gets the state of the observer with getState."
+
+        Note: Observer HAS A Subject
+
+    "I will show you a *concrete* example." -NN :P
+
+    Example: Horse Racing
+        publisher/Subject: announces winners
+        subscribers/Observers: betters
+
+        class Subject {
+            Observer *observers[MAX]; // Where MAX is some constant, this is good style.
+            int numObservers;
+            public:
+            bool attach(Observer *o) {...} // better joins (increment numObservers, add to observers)
+            bool detach(Observer *o) {...} // better stops betting (decrement numObservers, remove from observers)
+            void notifyObservers() {
+                for (int i = 0; i < numObservers; i++) {
+                    observers[i]->notify; // notify all observers
+                }
+            }
+            virtual ~Subject() {} // We provide a virtual destructor with no implementation, because there is no dynamic memory.
+                                  // This will do for now, but we will use this to learn something about pure virtual...
+        }
+
+        class Subject {
+            ...
+            virtual ~Subject() = 0; // pure virtual destructor
+                                    // This doesn't work, because subclasses will try to call the parent destructor.
+        }
+
+        If in doubt, make the destructor pure virtual BUT STILL IMPLEMENT THE DESTRUCTOR.
+        This seems contradictory, but what I said before about not needing an implementation is only vaguely true.
+        A subclass will want to call the parent's destructor.
+        Subject::~Subject(){} // This line should exist in implementation (Subject.cc)
+
+        So there is something else to pure virtual methods:
+            A pure virtual method is a method that subclasses must implement to be considered concrete.
+            This is even more complicated because children will attempt to call a parent's destructor, but can't redefine the parent's destructor (same name of "~Subject")
+            So a subclass continues to be abstract if it doesn't implement an inherited pure virtual method EXCEPT if it's the destructor.
+
+        "This pure virtual gotcha is the hardest part of the observer pattern. I will revisit this example next lecture." -NN
+--------------------------------------------------------
+Lecture 19
+
+Observer Pattern / Decorator Pattern / Factory / Template
+
+Recall horse races example:
+    class Subject { // virtual subject class
+        Observer *observer[max];
+        public:
+        Subject() ...
+        bool attach(Observer *o) {...}
+        bool detach(Observer *o) {...}
+        void verifyObservers() {...}
+        virtual ~Subject() = 0;
+    }
+
+    class Observer { // virtual observer pattern
+        public:
+        virtual void notify = 0;
+        virtual ~Observer();
+    }
+
+    class HorseRace : public Subject {
+        // attach, detach, notify, etc are inherited and we have that functionality
+        ifstream in;
+        string lastWinner;
+        public:
+        HorseRace(string fileSource) ...
+        ~HorseRace() {...}
+        bool runRace() {...}
+        string getState() { return lastWinner; }
+    }
+
+    class Better : public Observer {
+        HorseRace *hRace; // concrete Observer HAS A concrete Subject
+        string name, horse;
+        public:
+        Better(HorseRace *hRace, string name, string horse)
+            : hRace(hRace), name(name), horse(horse) {
+                hRace->attach(this); // Better becomes an observer of future horse races
+            }
+        void notify() {
+            string winner = hRace->getState(); // returns last winner of horse race
+            if (winner == horse) {
+                cout << "Yayy!!";
+            } else {
+                cout << "Oh no not again";
+            }
+        }
+    }
+
+    "For our assignment, we might get away with just using one class. A Cell is both a Subject and an Observer. The number of classes needed is situational."
+
+Decorator Pattern
+    e.g.
+        A browser window being decorated with scrollbars, etc.
+        The window is already running, and it is 'decorated' (new functionality added) during runtime.
+        This pattern is common in windowing systems:
+            - base window
+            - menu
+            - scroll bars
+
+    Abstract Component class (window)
+        virtual +Operation()
+    ConcreteComponent // plain window
+        +Operation
+    Decorator // IS A Component and HAS A Component
+        HAS A Component
+        virtual +Operation()
+    ConcreteDecA : public Decorator // scroll window
+        +operation()
+    ConcreteDecB : public Decorator // menu
+        +operation()
+
+    Class Component
+        Abstract, provides the interface all concrete classes must implement.
+    Concrete Decorators
+        Inherit from decorator which HAS A component, and IS A component.
+
+    A windown with a scroll bar and menu IS A abstract window, and HAS A window with a scrollbar.
+    A window with a scroll bar IS A abstract window and HAS A plain window.
+
+    class Coffee {
+        public:
+        virtual double cost() = 0;
+        virtual  {}
+    };
+
+    class Espresso : public Coffee {
+        public:
+        double cost() { return 1.00; }
+        string desc() { return "full roast espresso"; }
+    };
+
+    class Topping : public Coffee {
+        // HAS A should be a pointer, OWNS A is an embedded object.
+        // My coffee HAS cream and sugar, but you can't really separate the two...
+        // References will make us happy here.
+        protected:
+        Coffee &c;
+        Topping(coffee &c) : c(c) {}
+        ~Topping() { delete &c; }
+    };
+
+    class Water : public Topping {
+        public:
+        Water(coffee &c) : Topping(c) {}
+        double cost() { return c.cost() + 0.50; }
+        string desc { return c.desc() + " with water"; }
+    };
+
+    class Milk : public Topping {
+        protected:
+        Milk(Coffee &c) : Topping(c) {}
+        public:
+        double cost() { return c.cost() + 0.25; }
+    }
+
+    int main() {
+        Coffe *cp;
+
+        cp = new Espresso;
+        cp = new Milk(&c);
+    }
+
+    see lectures/se/decorator
+
+Factory Method Pattern
+    "Suppose we have two enemies - turtles, and bullets."
+    Enemy (abstract)
+        Turtle
+        Bullet
+    Level (abstract)
+        Normal
+        Castle
+
+    We want more bullets in the castle lever, because it's more difficult.
+
+    int main() {
+        ...
+        Enemy *e = new Turtle;
+                 //new Bullet;
+    }
+
+    Because the decision of which enemy to create depends on the level,
+    place the enemy creation logic inside levels.
+    The Level class has a virtual createEnemy method.
+
+    class Level {
+        ...
+        public:
+        virtual Enemy *createEnemy() = 0;
+    }
+
+    class Normal : public Level {
+        ...
+        public:
+        Enemy *createEnemy() { // more turtles }
+    };
+
+    class Castle : public Level {
+        ...
+        public:
+        Enemy *createEnemy() { // more bullets }
+    };
+
+    int main() {
+        Level *l = new Castle; // or new Normal;
+        while (!Dead) {
+            Enemy *e = l->createEnemy();
+            // deal with it
+        }
+    }
+
+    client code never calls enemy constructors.
+        Uses the createEnemy Factory method.
+        Note: We have seen similar behaviour in the singleton pattern.
+            Singleton pattern used the getInstance function.
+        Factories integrate well with Singletons.
+            If we have a Boss class, we only want one of them.
+                Enemy (abstract)
+                    Turtle
+                    Bullet
+                    Boss (Singleton)
+
+                If the Boss only appears at the Castle level,
+                only Castle::createEnemy needs to be changed!
+
+                Call Boss::getInstance to return the same Boss.
+
+                Client code is oblivious to the fact that the same enemy object is being returned.
+
+// next time: player.strike(enemy)
+
+Template Method Pattern
+
+    AbstractClass
+        +/-differingMethods (virtual)
+        +/-commonMethods
+    ConcreteClassA
+        +/-differingMethods
+    ConcreteClassB
+        +/-differingMethods
+    ConcreteClassC
+        +/-differingMethods
+
+    class Turtle : public Enemy {
+        public:
+        void Draw() {
+            drawHead();
+            drawShell();
+            drawTail();
+        }
+        private: // NOT virtual, do not want subclasses to override common behaviour
+        void drawHead() {...}
+        void drawTail() {...}
+
+        protected:
+        virtual void drawShell() = 0;
+    }
+---------------------------------
+Lecture 20
+
+Recall: Template Pattern (Applied to our turtle example)
+    class Turtle : public Enemy {
+      public:
+        void draw() {
+            drawHead();
+            drawShell();
+            drawTail();
+        }
+      private:
+        void drawHead() {...}
+        void drawTail() {...}
+        virtual void drawShell() = 0;
+    };
+
+    class RedTurtle : public Turtle {
+        void drawShell() { // draw red shell }
+    }
+
+Templates
+    A motivating example:
+        class Node { // linked list capable of storing ints
+            int data;
+            Node *next;
+        };
+
+        We cannot use this to store other types of data.
+
+    Use a template (a class parametrized on some number of types):
+        Take the int out of the Node class and replace it with a type parameter,
+        which is provided when we create variables of the templated class.
+
+        template <typename T> class Node {
+            T data;
+            Node<T> *next;
+          public:
+            Node(T data, Node<T> *next) : data(data) next(next) {}
+            T getData() const { return data; }
+            Node<T> *getNext() const { return next; }
+        };
+
+        Node<int> *intList = new Node<int>(2, new Node<int>(3, NULL));
+        Node<char> *charList = new Node<char>('a', new Node<char>('b', NULL));
+
+        Note: If we try to use the wrong type, the compiler will complain.
+            (Unless an implicit convertion exists, such as char-to-int ASCII value conversions.)
+
+        Write the template once, then reuse it for different data types.
+        The compiler replaces T with whatever type is given before continuing compilation.
+        This is relatively memory efficient during execution, but increases compile time.
+
+    Creating a linked list that contains linked lists:
+        Node<Node<int> > **linklist; // C++03 requires a space '> >' to prevent operator confusion.
+
+    STL: Standard Template Library
+        Dynamic Length Arrays
+            Grows (and shrinks) the length automatically.
+            'vector' template class, parametrized on one type.
+        
+            #include <vector>
+            using namespace std;
+            Vector<int> myVec;
+            myVec.push_back(5); // put at end of vector
+            myVec.push_back(10);
+            for (int i = 0; i < myVec.size(); i++) {
+                cout << myVec[i] << endl; // operator[] has been overloaded here
+            }
+
+            Note: myVec[i] is not 'range checked'.
+            It will not complain if you try to access myVec[9001].
+                To range check 0 <= i <= myVec.size(), call myVec.at(i);
+            There is also myVec.pop_back(); / removes the last element
+
+        Iterators
+            Suppose v is an array.
+            Recall pointer arithmetic:
+                for (int *p = v; p < v + size; p++) {
+                    cout << *p << endl; 
+                }
+
+            for (vector<int>::iterator i = v.begin(); i != v.end(); i++) {
+                cout << *i << endl;
+            }
+
+            An iterator is just an abstraction of a pointer.
+            'v.begin()' returns a pointer to the start of the array (vector).
+            'v.end()' returns a pointer to ONE PAST the last element in the array (vector), where we should stop the loop.
+
+            for (vector<int>::iterator i = v.rbegin(); i != v.rend(); i++) {
+                cout << *i << endl;
+            }
+            'v.rbegin()' returns a pointer to the last element.
+            'v.rend()' returns a pointer to ONE PAST the first element.
+
+            Iterators are VERY USEFUL, because other template classes are not simply arrays.
+            More complicated structures such as Binary Search Trees can also be iterated through!
+
+            "iostreams should also have iterators, but I'm not sure what their use case is." -NN
+
+            Array: lookup table of integer keys
+                int ---> int
+                int ---> string
+                int ---> Cell
+
+        'map' (in STL):
+            Lookup table, dictionary, association list
+                string ---> int
+            'map' is a template parametrized on TWO types.
+
+            #include <map>
+            using namespace std; // or else use std::map below
+            map<string, int> m;
+
+            m["abc"] = 10;
+            m["xyz"] = 55;
+            
+            cout << m["abc"] << endl; // 10
+            cout << m["default_value_for_undefined_key"] << endl; // 0
+            
+            m.erase("abc"); // removes entry from table
+
+            if (m.count("def")) { // can only return 0 or 1 in map, a 1-to-1 mapping
+                cout << "boo" << endl;
+            }
+
+            Note: multi-maps exist, where count can be > 1.
+
+            We can also iterate over a map!
+                Order of iteration is SORTED KEY ORDER (using standard string comparison).
+                    ("abc" < "tdb" < "xyz" regardless of initialization order)
+
+Visitor Design Pattern
+    Recall: Dynamic dispatch (as opposed to single or double dispatch, which we'll see).
+        Virtual method: method that runs depends on the run time type of the object (dynamic dispatch).
+
+    Double Dispatch
+        We want to choose a method based on the run time type of 2 objects.
+
+        Enemy (virtual)
+            \ Turtle
+            \ Bullet
+        Weapon (virtual)
+            \ Stick
+            \ Rock
+
+        There are four different combinations for enemy.strike(weapon).
+        Where do we implement the strike method?
+        Option 1: Implement 'virtual Enemy::strike(Weapon *w)'
+            Here, the strike method depends on the type of the Enemy only, via dynamic dispatch.
+            The compiler decides the right hand side (type of Weapon).
+        Option 2: Implement 'virtual Weapon::strike(Enemy *e)'
+            Here, the strike method depends on the type of the Weapon only, via dynamic dispatch.
+            The compiler decides the right hand side (type of Enemy).
+
+        Trick: Use a combination of overriding and overloading.
+
+            class Enemy {
+                public:
+                virtual void strike(Weapon &w) = 0;
+            };
+
+            class Turtle : public Enemy {
+                public:
+                void strike(Weapon &w) {
+                    w.useOn(*this); // type of '*this' is a Turtle, known at compile time.
+                }
+            };
+
+            class Bullet : public Enemy {
+                public:
+                void strike(Weapon &w) {
+                    w.useOn(*this); // type of '*this' is a Bullet, known at compile time.
+                }
+            };
+
+            Note: Now we must have a useOn method in our Weapon class that is overloaded.
+
+            class Weapon { // abstract base class
+                public:
+                virtual void useOn(Turtle &t) = 0;
+                virtual void useOn(Bullet &b) = 0; // overloading!
+            };
+
+            class Stick : public Weapon {
+                void useOn(Turtle &t) { // Stick on Turtle }
+                void useOn(Bullet &t) { // Stick on Bullet }
+            }
+
+            class Rock : public Weapon {
+                public:
+                void useOn(Turtle &t) { // Rock on Turtle }
+                void useOn(Bullet &b) { // Rock on Bullet }
+            }
+
+            int main() {
+                Enemy *e = new Bullet; // typically generated by a Factory
+                Weapon *w = new Stick;
+                e->strike(&w); // at runtime, Bullet's strike method is called
+            }
+
+            At run time, Bullet's strike method is called, sending type of '*this' as a Bullet,
+            then Stick's useOn gets called with an argument of Bullet.
+            So Stick::useOn(Bullet &b) is called. // Stick on Bullet
+
+            Note: this is just one use of the visitor design pattern.
 ---------------------------------------
 Midterm Review
 
@@ -3222,3 +4344,128 @@ Singleton (a design pattern)
 
 valgrind -d
 valgrind --leak-check-full
+----------------------------------
+Tutorial 8
+
+Recall the benefits of separate compilation. It's more organized, easier to debug, etc.
+    Prevents recompiling of all the things if only one thing changed.
+
+Makefile:
+    main.o: book.h book.cc
+        g++ -c book.cc
+
+    textbook.o: textbook.h textbook.cc book.h
+        g++ -c comic.cc
+    ...
+
+    ^^^^ Whitespace MUST be a tab.
+    "textbook must be recompiled if book changes, etc."
+    make book.o
+    Then on the command line, run make
+    make is a built-in linux file that looks for "Makefile" (or "makefile")
+    make -f otherMakeFileName
+
+
+    ...
+    .PHONY: clean
+
+    clean:
+        rm *.o main
+
+
+    .PHONY says "clean is not a file I want to look at", and lets you run the clean directive.
+
+    Top of Makefile:
+        CXX = g++
+        CXXFLAGS = -Wall -d -c -etc
+
+        main: ...
+            ${CXX} ${CXXFLAGS} main.o book.o textbook.o
+
+
+        ${EXEC} ...
+
+        g++ -c -MMD lists dependencies
+
+    *Use the given makefile given in svn
+    *Know what it looks like for the final exam
+
+Inheritance
+    class Tree {
+        int data;
+    };
+    class BTree : public Tree { // "public inheritance"
+        // data is still private to Tree
+
+    };
+
+    class Tree {
+        protected: // visible to subclasses, gets around getters & setters, not ideal for OOP
+        int data;
+    }
+
+    virtual keyword: subclasses can overwrite this and those new things can be type-specific
+    see phone.cc
+
+    Animal
+        Noise
+        virtualNoise
+
+    Inherits from Animal:
+        Cat
+            virtual
+
+        Dog
+            Noise
+        Fish
+            Noise
+        Fox
+            Virtual
+
+    Inherits from cat:
+        Lion
+
+    Inherits from fish:
+        Whale
+            Virtual
+        Shark
+            Noise
+            Virtual
+
+    "Uses the most recent ancestor's noise/virtualNoise"
+    g++ -DPOINTERS
+        sets up with pointers
+        Animal * pA = ...--------------------------------------
+Tutorial 9
+
+Subject (virtual)
+    -obs: Observer
+    --------------
+    +attach(Observer)
+    +detach(Observer)
+    +notifyAll()
+
+Observer (virtual)
+    +notify()
+
+ConcreteSubject
+
+ConcreteObserver
+    +notify()
+
+Note: common cin >> char and cin >> int gotcha:
+    -1 will get split into '-' and '1', use  cin >> string and then istringstream(string)
+
+Tip: use gdb to debug segfaults
+g++ -g gdbex0.cpp  -->  segmentation fault!
+gdb ./a.out
+    r run
+    print i
+    print arr
+    break - set breakpoint
+    bt - backtrace (print call stack)
+
+Facebook observer example
+    Recursively call notify
+
+Taco Decorator example
