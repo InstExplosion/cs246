@@ -1,0 +1,34 @@
+--------------------------------------
+Tutorial 9
+
+Subject (virtual)
+    -obs: Observer
+    --------------
+    +attach(Observer)
+    +detach(Observer)
+    +notifyAll()
+
+Observer (virtual)
+    +notify()
+
+ConcreteSubject
+
+ConcreteObserver
+    +notify()
+
+Note: common cin >> char and cin >> int gotcha:
+    -1 will get split into '-' and '1', use  cin >> string and then istringstream(string)
+
+Tip: use gdb to debug segfaults
+g++ -g gdbex0.cpp  -->  segmentation fault!
+gdb ./a.out
+    r run
+    print i
+    print arr
+    break - set breakpoint
+    bt - backtrace (print call stack)
+
+Facebook observer example
+    Recursively call notify
+
+Taco Decorator example

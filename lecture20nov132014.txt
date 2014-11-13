@@ -1,0 +1,207 @@
+---------------------------------
+Lecture 20
+
+Recall: Template Pattern (Applied to our turtle example)
+    class Turtle : public Enemy {
+      public:
+        void draw() {
+            drawHead();
+            drawShell();
+            drawTail();
+        }
+      private:
+        void drawHead() {...}
+        void drawTail() {...}
+        virtual void drawShell() = 0;
+    };
+
+    class RedTurtle : public Turtle {
+        void drawShell() { // draw red shell }
+    }
+
+Templates
+    A motivating example:
+        class Node { // linked list capable of storing ints
+            int data;
+            Node *next;
+        };
+
+        We cannot use this to store other types of data.
+
+    Use a template (a class parametrized on some number of types):
+        Take the int out of the Node class and replace it with a type parameter,
+        which is provided when we create variables of the templated class.
+
+        template <typename T> class Node {
+            T data;
+            Node<T> *next;
+          public:
+            Node(T data, Node<T> *next) : data(data) next(next) {}
+            T getData() const { return data; }
+            Node<T> *getNext() const { return next; }
+        };
+
+        Node<int> *intList = new Node<int>(2, new Node<int>(3, NULL));
+        Node<char> *charList = new Node<char>('a', new Node<char>('b', NULL));
+
+        Note: If we try to use the wrong type, the compiler will complain.
+            (Unless an implicit convertion exists, such as char-to-int ASCII value conversions.)
+
+        Write the template once, then reuse it for different data types.
+        The compiler replaces T with whatever type is given before continuing compilation.
+        This is relatively memory efficient during execution, but increases compile time.
+
+    Creating a linked list that contains linked lists:
+        Node<Node<int> > **linklist; // C++03 requires a space '> >' to prevent operator confusion.
+
+    STL: Standard Template Library
+        Dynamic Length Arrays
+            Grows (and shrinks) the length automatically.
+            'vector' template class, parametrized on one type.
+        
+            #include <vector>
+            using namespace std;
+            Vector<int> myVec;
+            myVec.push_back(5); // put at end of vector
+            myVec.push_back(10);
+            for (int i = 0; i < myVec.size(); i++) {
+                cout << myVec[i] << endl; // operator[] has been overloaded here
+            }
+
+            Note: myVec[i] is not 'range checked'.
+            It will not complain if you try to access myVec[9001].
+                To range check 0 <= i <= myVec.size(), call myVec.at(i);
+            There is also myVec.pop_back(); / removes the last element
+
+        Iterators
+            Suppose v is an array.
+            Recall pointer arithmetic:
+                for (int *p = v; p < v + size; p++) {
+                    cout << *p << endl; 
+                }
+
+            for (vector<int>::iterator i = v.begin(); i != v.end(); i++) {
+                cout << *i << endl;
+            }
+
+            An iterator is just an abstraction of a pointer.
+            'v.begin()' returns a pointer to the start of the array (vector).
+            'v.end()' returns a pointer to ONE PAST the last element in the array (vector), where we should stop the loop.
+
+            for (vector<int>::iterator i = v.rbegin(); i != v.rend(); i++) {
+                cout << *i << endl;
+            }
+            'v.rbegin()' returns a pointer to the last element.
+            'v.rend()' returns a pointer to ONE PAST the first element.
+
+            Iterators are VERY USEFUL, because other template classes are not simply arrays.
+            More complicated structures such as Binary Search Trees can also be iterated through!
+
+            "iostreams should also have iterators, but I'm not sure what their use case is." -NN
+
+            Array: lookup table of integer keys
+                int ---> int
+                int ---> string
+                int ---> Cell
+
+        'map' (in STL):
+            Lookup table, dictionary, association list
+                string ---> int
+            'map' is a template parametrized on TWO types.
+
+            #include <map>
+            using namespace std; // or else use std::map below
+            map<string, int> m;
+
+            m["abc"] = 10;
+            m["xyz"] = 55;
+            
+            cout << m["abc"] << endl; // 10
+            cout << m["default_value_for_undefined_key"] << endl; // 0
+            
+            m.erase("abc"); // removes entry from table
+
+            if (m.count("def")) { // can only return 0 or 1 in map, a 1-to-1 mapping
+                cout << "boo" << endl;
+            }
+
+            Note: multi-maps exist, where count can be > 1.
+
+            We can also iterate over a map!
+                Order of iteration is SORTED KEY ORDER (using standard string comparison).
+                    ("abc" < "tdb" < "xyz" regardless of initialization order)
+
+Visitor Design Pattern
+    Recall: Dynamic dispatch (as opposed to single or double dispatch, which we'll see).
+        Virtual method: method that runs depends on the run time type of the object (dynamic dispatch).
+
+    Double Dispatch
+        We want to choose a method based on the run time type of 2 objects.
+
+        Enemy (virtual)
+            \ Turtle
+            \ Bullet
+        Weapon (virtual)
+            \ Stick
+            \ Rock
+
+        There are four different combinations for enemy.strike(weapon).
+        Where do we implement the strike method?
+        Option 1: Implement 'virtual Enemy::strike(Weapon *w)'
+            Here, the strike method depends on the type of the Enemy only, via dynamic dispatch.
+            The compiler decides the right hand side (type of Weapon).
+        Option 2: Implement 'virtual Weapon::strike(Enemy *e)'
+            Here, the strike method depends on the type of the Weapon only, via dynamic dispatch.
+            The compiler decides the right hand side (type of Enemy).
+
+        Trick: Use a combination of overriding and overloading.
+
+            class Enemy {
+                public:
+                virtual void strike(Weapon &w) = 0;
+            };
+
+            class Turtle : public Enemy {
+                public:
+                void strike(Weapon &w) {
+                    w.useOn(*this); // type of '*this' is a Turtle, known at compile time.
+                }
+            };
+
+            class Bullet : public Enemy {
+                public:
+                void strike(Weapon &w) {
+                    w.useOn(*this); // type of '*this' is a Bullet, known at compile time.
+                }
+            };
+
+            Note: Now we must have a useOn method in our Weapon class that is overloaded.
+
+            class Weapon { // abstract base class
+                public:
+                virtual void useOn(Turtle &t) = 0;
+                virtual void useOn(Bullet &b) = 0; // overloading!
+            };
+
+            class Stick : public Weapon {
+                void useOn(Turtle &t) { // Stick on Turtle }
+                void useOn(Bullet &t) { // Stick on Bullet }
+            }
+
+            class Rock : public Weapon {
+                public:
+                void useOn(Turtle &t) { // Rock on Turtle }
+                void useOn(Bullet &b) { // Rock on Bullet }
+            }
+
+            int main() {
+                Enemy *e = new Bullet; // typically generated by a Factory
+                Weapon *w = new Stick;
+                e->strike(&w); // at runtime, Bullet's strike method is called
+            }
+
+            At run time, Bullet's strike method is called, sending type of '*this' as a Bullet,
+            then Stick's useOn gets called with an argument of Bullet.
+            So Stick::useOn(Bullet &b) is called. // Stick on Bullet
+
+            Note: this is just one use of the visitor design pattern.

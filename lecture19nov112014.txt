@@ -1,0 +1,220 @@
+--------------------------------------------------------
+Lecture 19
+
+Observer Pattern / Decorator Pattern / Factory / Template
+
+Recall horse races example:
+    class Subject { // virtual subject class
+        Observer *observer[max];
+        public:
+        Subject() ...
+        bool attach(Observer *o) {...}
+        bool detach(Observer *o) {...}
+        void verifyObservers() {...}
+        virtual ~Subject() = 0;
+    }
+
+    class Observer { // virtual observer pattern
+        public:
+        virtual void notify = 0;
+        virtual ~Observer();
+    }
+
+    class HorseRace : public Subject {
+        // attach, detach, notify, etc are inherited and we have that functionality
+        ifstream in;
+        string lastWinner;
+        public:
+        HorseRace(string fileSource) ...
+        ~HorseRace() {...}
+        bool runRace() {...}
+        string getState() { return lastWinner; }
+    }
+
+    class Better : public Observer {
+        HorseRace *hRace; // concrete Observer HAS A concrete Subject
+        string name, horse;
+        public:
+        Better(HorseRace *hRace, string name, string horse)
+            : hRace(hRace), name(name), horse(horse) {
+                hRace->attach(this); // Better becomes an observer of future horse races
+            }
+        void notify() {
+            string winner = hRace->getState(); // returns last winner of horse race
+            if (winner == horse) {
+                cout << "Yayy!!";
+            } else {
+                cout << "Oh no not again";
+            }
+        }
+    }
+
+    "For our assignment, we might get away with just using one class. A Cell is both a Subject and an Observer. The number of classes needed is situational."
+
+Decorator Pattern
+    e.g.
+        A browser window being decorated with scrollbars, etc.
+        The window is already running, and it is 'decorated' (new functionality added) during runtime.
+        This pattern is common in windowing systems:
+            - base window
+            - menu
+            - scroll bars
+
+    Abstract Component class (window)
+        virtual +Operation()
+    ConcreteComponent // plain window
+        +Operation
+    Decorator // IS A Component and HAS A Component
+        HAS A Component
+        virtual +Operation()
+    ConcreteDecA : public Decorator // scroll window
+        +operation()
+    ConcreteDecB : public Decorator // menu
+        +operation()
+
+    Class Component
+        Abstract, provides the interface all concrete classes must implement.
+    Concrete Decorators
+        Inherit from decorator which HAS A component, and IS A component.
+
+    A windown with a scroll bar and menu IS A abstract window, and HAS A window with a scrollbar.
+    A window with a scroll bar IS A abstract window and HAS A plain window.
+
+    class Coffee {
+        public:
+        virtual double cost() = 0;
+        virtual  {}
+    };
+
+    class Espresso : public Coffee {
+        public:
+        double cost() { return 1.00; }
+        string desc() { return "full roast espresso"; }
+    };
+
+    class Topping : public Coffee {
+        // HAS A should be a pointer, OWNS A is an embedded object.
+        // My coffee HAS cream and sugar, but you can't really separate the two...
+        // References will make us happy here.
+        protected:
+        Coffee &c;
+        Topping(coffee &c) : c(c) {}
+        ~Topping() { delete &c; }
+    };
+
+    class Water : public Topping {
+        public:
+        Water(coffee &c) : Topping(c) {}
+        double cost() { return c.cost() + 0.50; }
+        string desc { return c.desc() + " with water"; }
+    };
+
+    class Milk : public Topping {
+        protected:
+        Milk(Coffee &c) : Topping(c) {}
+        public:
+        double cost() { return c.cost() + 0.25; }
+    }
+
+    int main() {
+        Coffe *cp;
+
+        cp = new Espresso;
+        cp = new Milk(&c);
+    }
+
+    see lectures/se/decorator
+
+Factory Method Pattern
+    "Suppose we have two enemies - turtles, and bullets."
+    Enemy (abstract)
+        Turtle
+        Bullet
+    Level (abstract)
+        Normal
+        Castle
+
+    We want more bullets in the castle lever, because it's more difficult.
+
+    int main() {
+        ...
+        Enemy *e = new Turtle;
+                 //new Bullet;
+    }
+
+    Because the decision of which enemy to create depends on the level,
+    place the enemy creation logic inside levels.
+    The Level class has a virtual createEnemy method.
+
+    class Level {
+        ...
+        public:
+        virtual Enemy *createEnemy() = 0;
+    }
+
+    class Normal : public Level {
+        ...
+        public:
+        Enemy *createEnemy() { // more turtles }
+    };
+
+    class Castle : public Level {
+        ...
+        public:
+        Enemy *createEnemy() { // more bullets }
+    };
+
+    int main() {
+        Level *l = new Castle; // or new Normal;
+        while (!Dead) {
+            Enemy *e = l->createEnemy();
+            // deal with it
+        }
+    }
+
+    client code never calls enemy constructors.
+        Uses the createEnemy Factory method.
+        Note: We have seen similar behaviour in the singleton pattern.
+            Singleton pattern used the getInstance function.
+        Factories integrate well with Singletons.
+            If we have a Boss class, we only want one of them.
+                Enemy (abstract)
+                    Turtle
+                    Bullet
+                    Boss (Singleton)
+
+                If the Boss only appears at the Castle level,
+                only Castle::createEnemy needs to be changed!
+
+                Call Boss::getInstance to return the same Boss.
+
+                Client code is oblivious to the fact that the same enemy object is being returned.
+
+// next time: player.strike(enemy)
+
+Template Method Pattern
+
+    AbstractClass
+        +/-differingMethods (virtual)
+        +/-commonMethods
+    ConcreteClassA
+        +/-differingMethods
+    ConcreteClassB
+        +/-differingMethods
+    ConcreteClassC
+        +/-differingMethods
+
+    class Turtle : public Enemy {
+        public:
+        void Draw() {
+            drawHead();
+            drawShell();
+            drawTail();
+        }
+        private: // NOT virtual, do not want subclasses to override common behaviour
+        void drawHead() {...}
+        void drawTail() {...}
+
+        protected:
+        virtual void drawShell() = 0;
+    }

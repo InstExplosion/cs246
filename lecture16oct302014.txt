@@ -1,0 +1,256 @@
+Lecture 16: October 30 2014
+
+*****************
+Announcements:
+	- Good News: 
+		- Nomair has candy today. AND HE'S GONNA GET US TIMBITS SOMETIME (to bribe us to come to class)
+		- He needs people to recommend music for him to play at the beginning of class (NOT top 40 in the last 5 years)
+	- Bad News:
+		- midterms have been marked
+		- The Average: 59%
+		- but it was harder than last term (the average last term was 62%)
+******************
+
+
+- Last time we discussed the class keyword
+
+ex. Vec with private x,y fields and no public get or set methods. Implement operator<<. 
+
+	ostream &operator<<(ostream &out, const Vec &v) {
+		cout<<v.x<<" "<<v.y;
+		return out;
+	}
+	- this can be implemented this way because x and y are private. 
+	- so we want to provide encapsulation, be we also want to be able to make an exception
+				=> the 'friend' keyword
+				* this is on assignment 4
+
+	** friend is useful for input and output operators**
+
+	class Vec {
+		int x,y; // private by default
+		public:
+			friend std::ostream &operator<<(std::ostream &, const Vec &); // operator<< is NOT a method!!!!!! 
+	}
+	- what this says is: "this is what it means to be a vector and operator<< is my friend so it has access to all my private parts"
+	- once the 'friend' keyword has been added, the implementation above compiles 
+
+	*there is no friendship qualifier that gives ONLY read access**
+		=> by adding 'friend' you are breaking encapsulation. So if that friend is an ass they might break everything.  
+
+	** you can make a class a friend of another class ** 
+
+- Advice: "Unlike real life, have as few friends as possible"
+	- because it does break encapsulation which was the whole point behind the 'private' keyword
+
+** public methods can access private fields **
+
+SYSTEM MODELLING:
+
+- Even with limited knowledge of C++ we can design relatively complex programs
+- We're better off designing something and them implementing it.
+
+- When designing: 
+	1. What are the abstractions in my program? 
+		-a.k.a What classes will I have? 
+	2. Relationship between classes 
+
+- We will discuss the difference kinds of relationships 
+
+- There are formal methods to specify the design of a system
+	- We will use UML (Unified Modelling Language)
+
+- UML is an amalgatmation of a bunch of standards (it's huuuuge) 
+
+- A UML class is a box:
+
+-----------------
+|Vec            | ->name of class (NOT OPTIONAL)
+-----------------
+| - x: Integer  | ->fields (optional)
+| + y: Integer  |		- not all fields need to be written (- == private, + == private)
+-----------------
+|  - setX       | -> methods (optional)
+|  + getX       |
+-----------------
+
+Relationship 1: Composition
+
+ex. 
+	class Vec {
+		int x,y,z; // private fields
+		public:
+		Vec(int x, int y, int z): x(x), y(y), z(z) {}
+	};
+
+	Let's say we want to define what a plane is. 
+
+	class Plane  {
+		Vec v1,v2;
+	};
+
+	- This is composition because you are embedding objects inside of objects
+
+	** If in your main code you do
+		main () {
+			Plane P; 
+		}
+		this won't compile because the default constructor for Plane will run, this runs the default construct for Vec which has been overwritten. 
+
+- To fix this:
+	Option 1: Provide a default constructor (meh)
+	Option 2: Create a constructor for Plane which calls the non-default constructor for Vec. (YEH)
+
+	ex. 
+		class Plane {
+			Vec v1,v2;
+			public:
+			Plane(): v1(2,3,4), v2(5,6,7) {} // now Plane P; in main compiles 
+		}                  \      /
+                            \    /
+                             \  /
+                  calls 3 parameter constructor
+
+
+- Back to composition:
+
+- Composition is embeding an obejct (ex. Vec) inside another object (ex. Plane)
+- This is also called an "owns a " relationship  (as in Plane owns Vector)
+
+- When is this useful? Some guidelines: 
+	- If A "owns a" B, then B has no existence outside A 
+	- If A is destroyed B is destroyed 
+	- If A is copied, B is copied
+
+	ex. A cars "owns a " wheels 
+
+- "owns a" in UML:
+
+-----------			------------
+| Plane    | ∆-> 	| Vec       | (delta is a shadded diamon)
+------------		-------------
+| ...		|		| -x 		|
+-------------		| -y 		|
+					| -z 		|
+					-------------
+
+Relationship 2: Agregation
+	
+	ex. A catalog has car parts. These parts exist outside a catalog; destroying or copying catalog has no effect on parts.
+
+- This is a "has a" relationship 
+
+- Agregation is implemented through using pointers to objects  inside another object
+
+ex. Pond "has a" ducks.
+	
+	class Pond {
+		Duck *ducks[20];
+	};
+
+
+- A key challenge is deciding between agregation an composition
+
+- Agregation in UML:
+
+-----------			------------
+| Pond     | ∆-> 	| Duck      | (delta is a hollow diamond)
+------------		-------------
+| ...		|		| -x 		|
+-----------		    -------------
+
+
+
+Relationship 3: Inheritance 
+
+*print out code and bring it to class 
+* all code is available in the repository
+
+ex. Track my collection of books (c++/inheritance/example1)
+	
+	class Book {
+		string title, author;
+		int numPages;
+		public:
+			Book(string title, string author, int numPages) {...}
+	};
+
+	What if we want to also partition our books into textbooks, comic book etc. and keep unique information for each type of book? 
+
+	class TextBooks {
+		string title, author;
+		int numPages;
+		string topic;
+	};
+
+	class ComicBooks {
+		string title, author;
+		int numPages;
+		string protag; //progtagoniast of comic books
+	};
+
+	Now we can represent general books, textbooks and comic books. We want an array(collection), but we don't want 3 different arrays...
+
+- There are two ways we can represent 3 different types in an array
+	- In C:
+		Option 1: 'union'. 
+				union Booktype{ 
+						Book *b;
+						TextBook *tb;		]->creates an array of booktypes
+						ComicBook *cb;
+				}
+
+				BookType myBooks[20];
+		
+			- this is a bad option because you need to track what each element contains 
+
+		Option 2: Array of void*
+			- but you still need to track extra information
+			- also, you could place a types that isn't a book 
+			=> this is acutally worse than using union
+
+- We can use inheritance to create a book hierarchy 
+
+ex. class Book is unchanged. 
+
+	- a textbook "is a" book with an additinal field, so is ComicBook
+
+	class TextBook: public Book { //textbook inherits from book; textbook is a book
+		string topic;
+	};
+
+	class ComicBook: public Book {
+		string protag;
+	};
+
+	=> TextBook and ComicBook inherit title, author and numPages from Book. 
+
+- Book is the base class or the superclass
+	=> TextBook and ComicBook are the derived class or the subclass 
+
+** TEXTBOOK OBJECTS HAVE 4 FIELDS: 3 INHERITED AND 1 NEW FIELD** (same for comic)
+	=> we can call on a Text/ComicBook object any public method that we could call on a book object
+
+- TextBook inherited title, author and numPages; these were private in Book
+	=> TextBook objects cannot access them!!!!!!!!!! (can't assign or read)
+	- If I can't access them how the hell can you initialize them in the constructor?!?!?!?!?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

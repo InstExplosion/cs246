@@ -1,0 +1,218 @@
+---------------------------------------
+Lecture 17
+
+Inheritance, Virtual Keyword
+
+Recap:
+    class Book {
+        string title, author;
+        int numPages;
+        public:
+        Book(string title, string author, int numPages) :...
+        bool isItHeavy() {return numPages > 300; }
+        string getAuthor() { return author; }
+        void setAuthor(string auth) { author = auth; }
+    }
+
+    class Textbook : public Book {
+        string topic;
+        public:
+        Textbook(string title, string author, int numPages, string topic);
+    }
+
+
+    int main() {
+        TextBook tb ...;
+        tb.author = ...; // Not allowed
+        tb.getAuthor(); // allowed
+    }
+
+    TextBook::TextBook( ____, ____, ____, ____)
+        : title(title), author(author), numPages(numPages), topic(topic) {} // Doesn't compile.
+        // Title, author, numPages are private.
+        // When an object is created:
+        //  - Space is allocated
+        //  - Superclass part of the object is constructed (this looks for default zero-argument constructor of Book)
+        //  - Field constructors run / member initialization list
+        //  - Constructor body
+        // No default (zero-argument) constructor exists for Book
+
+    TextBook::TextBook(string title, string author, int numPages, string topic):
+        Book(title, author, numPages), topic(topic) {}
+        // You need to use the member initialization list to call the non-default constructor for your superclass.
+
+    Lesson:
+        If the superclass does not have a default constructor, call a non-default constructor in the MIL.
+
+    See /inheritance/example1
+    "I highly recommend looking through all of these examples." -NN
+
+If the superclass has private members, the subclass cannot access them.
+    If you want access to superclass fields, make the superclass fields protected.
+    Fields or methods that are protected are accessible to the subclasses (still not accessible to outsiders).
+    "If you are an instance of the subclass, then you really have an instance of the superclass as well." -NN
+
+Example of using protected:
+    class Book {
+        protected:
+        string title, author;
+        int numPages;
+        public:
+        ...
+    };
+
+    class TextBook : public Book {
+        string topic;
+        void setAuthor(string auth) { author = auth; }
+    }
+
+    int main () {
+        TextBook tb('','','','');
+        tb.author = "----"; // Won't work. Author would have to be public.
+        // TextBook has access to protected author, but only within TextBook's inner code.
+    }
+
+Protected breaks encapsulation.
+    If we don't want Book's author to ever be Shakespeare, we can't stop TextBook from subverting this limitation on the protected field.
+    No way to protect class invariants.
+    Advice:
+        Private fields, protected get/set methods.
+        This doesn't break class invariance, because you have written these get/set methods.
+
+Inheritance creates a "IS A" relationship.
+    Recall:
+        "OWNS A" embeds object
+        "HAS A" pointer to an object, aggregation
+
+    TextBook inherits from a Book. TextBook IS A Book, a Comic IS A Book.
+
+         [Book ]
+          __|__
+         |     |
+  [Textbook] [ Comic  ]
+  [ (topic)] [(protag)]
+
+Motivation for virtual keyword:
+    Book is considered heavy if it's > 300 pages.
+    TextBook is considered heavy if it's > 500 pages.
+    Comic is considered heavy if it's > 30 pages.
+
+    class Book {
+        // usual fields
+        public:
+        bool isItHeavy() { return numPages > 300; }
+        getNumPages() { return numPages; }
+    };
+
+    "Override the isItHeavy method. This requires a public accessor method in the superclass."
+
+    class TextBook : public Book {
+        public:
+        bool isItHeavy() {
+            return getNumPages > 500;
+        }
+    };
+    
+    class Comic : public Book {
+        public:
+        bool isItHeavy() { return getNumPages() > 30; }
+    };
+
+    Book b("book", "myauthor", 50);
+    b.isItHeavy(); // false
+    Comic cb("mycomic", mycomicauthor", 40, "batman");
+    cb.isItHeavy(); // true
+
+    "Objects have a 'Vtable' full of pointers to their methods in memory.
+     So where we have an instance of Comic, Book's isItHeavy function exists
+     in memory but cb's Vtable doesn't point to it."
+
+     What happens if we do this?:
+        Book b2 = Comic("mycomic", "mycomicauthor", 40, "batman");
+        b2.isItHeavy(); // What do?
+
+        Two options:
+            1. Book::isItHeavy runs --> false // This is what happens. The compiler's not smart enough.
+            2. Comic::isItHeavy runs --> true
+
+   Book              Comic  
+[  title  ]       [  title   ]
+[ author  ]       [  author  ]
+[numPages ]       [ numPages ]
+                  [ protag   ]
+
+When you assign a subclass object to a superclass object, the object is sliced (fields are chopped off). This creates a possible memory leak!
+    Comic has been coerced into a Book
+    Superclass methods will be called.
+
+    Q: Why would we want to do this?
+    A: If we want to declare an array of Books, we can still store Comic books in it.
+
+    "It comes down to casting."
+
+    Q: Can we cast Comics into TextBooks?
+    A: _         _
+        \_(O_O)_/     "..." -NN
+
+    Comic cb(dontcare, dontcare, 40, dontcare);
+    Book *pB = &cb;
+    Comic *pcB = &cb;
+    pCB->isItHeavy(); // true
+    pb->isItHeavy(); // false // Book's isItHeavy runs.
+    When you are talking about pointers, no coersion occurs.
+    Superclass pointer to a subclass object does NOT slice the object.
+
+Lesson: If we acces an object through a superclass pointer, the superclass method runs (even though there is no slicing).
+    The compiler uses the type of the pointer (or reference) to decide which method to call.
+        - Does NOT consider the actual type of the object.
+        - That's a problem.
+        - An array of Books would run the Book::isItHeavy method on everything in the array! :(
+
+    We would like to refer to different Books using Book pointers (or references), and still call the customized subclass method.
+    We want the most customized method to run. 
+
+    "EVERYTHING that is true for pointers is true for references."
+
+Using virtual:
+    class Book {
+        public:
+        virtual bool isItHeavy() {...}
+    };
+    class TextBook/Comic NO CHANGE
+    Only the superclass method needs to be declared virtual.
+
+    Comic cb(dontcare, dontcare, 40, dontcare);
+    Book *pB = &cb;
+    Comic *pcB = &cb;
+    pCB->isItHeavy(); // true (obviously, Comic book's method runs)
+    pb->isItHeavy(); // true "Virtual? Yup. I'll look at the type of the object." - Compiler
+
+Virtual Method:
+    Chooses which method to run based on the type of the actual type of the object.
+    The runtime type of the object is used.
+        The decsion of what method is called is made when the program is executing, not by the compiler. You pay a small performance penalty.
+        Note that this only works with a pointer to the object.
+    "It goes all the way down. Even if you have a SpecialComics class."
+    The process of finding the method using the runtime type of an object is called dynamic dispatch.
+        Every Java method is virtual by default, so you get dynamic dispatch by default.
+        There are ways to do this in the compiler, but that's for CS 744.
+
+    /example4
+        Books *collection[20];
+        ...
+        ... // Book, Comic, or TextBooks
+        ...
+        for (int i = 0; i < 20; i++) {
+            collection[i]->isItHeavy()  // ith element of the array, a Book pointer
+        }
+
+        This array accomodates multiple types under one abstraction.
+         - POLYMORPHISM
+            The ability to accomodate multiple types in one abstraction. Explain the virtual keyword. Get job.
+
+    Destructors
+        See /example5
+            X *xp = new Y(5, 10);
+            delete xp;
+            // Memory has leaked
+            Make X's destructor virtual.

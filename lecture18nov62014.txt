@@ -1,0 +1,244 @@
+----------------------------------------------
+Lecture 18
+
+Make, 2D Arrays, abstract
+
+"We have an array of topics to cover today." -NN :P
+
+Make was covered in the last tutorial. See the examples if you didn't attend/understand.
+    make is a linux utility that takes the burdon of keeping track of changed files.
+    makefiles have targets, dependencies, and recipes.
+        target: main.o
+        dependencies: main.cc book.h textbook.h comic.h
+        recipe: g++ -c main.cc
+
+        Corresponding makefile line:
+
+            main.o: main.cc book.h textbook.h comic.h
+            [TAB]recipe: g++ -c main.cc
+
+            What do we need to create main() ?
+
+                     [main]
+                       |
+     ,-------------:-----------:------------,
+    /              |           |             \
+[main.o]       [book.o]   [textbook.o]   [comic.o]
+                /  \
+        [book.cc] [book.o]
+
+    Note: make looks at the file's modification timestamp, as seen when running "ls -l".
+    The hard part here is coming up with all of the dependencies.
+        We can do this automatically with g++ -MMD
+        .PHONY specifies that a given ":something" is not a target file, but a command to be run "make something".
+        .PHONY: clean
+        clean:
+            ---
+        Look at the last example Makefile that's been posted. We have made it as general as possible.
+        Just copy and paste this example Makefile and change the OBJECTS line near the top for your Marmoset Makefiles. :)
+            Make sure you understand what this file does, though.
+
+2D Array
+    "We (the profs) decided to cover this topic in class because there has been some confusion, and it's necessary for A4's 'Flood It' question." -NN
+
+    Stack allocated 2D array:
+        int a[10][5]; // 10 rows, 5 columns
+        a[i][j] // ith row, jth column
+        // *(*(a + i) + j)
+        // Useful function header: "foo(int a[][], int i, int j);"
+        ________________
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        [  |  |  |  |  ]
+        ````````````````
+
+    Heap allocated 2D array:
+        int *a[10]; // An array of int pointers.
+        a[0] = new int[5];
+        a[1] = new int[5];
+        // loop through a[i] to initialize these if you want
+        // make sure to loop through and delete it all after you're done
+        // Rule: Postfix before Prefix /* Read right to left -JR */
+        // Aside: int (*a)[10]; // pointer to an array
+        // Note: hardcoded numbers like "10" above should be avoided, set it to a variable.
+
+        int *a[10]      new int [5]
+         ______      ______________
+        [    --]--->[  |  |  |  |  ]  
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        [    --]--->[  |  |  |  |  ]
+        ````````    ````````````````
+
+        OR:
+            int **a;
+            a = new int *[10];
+            for (int i = 0; i < 10; i++) { // nested loop to initialize
+                a[i] = new int[5];
+                for (int j = 0; j < 5; j++) {
+                    cin>>a[i][j]; // initialize to stdin (can be whatever)
+                }
+            }
+            for (int i = 0; i < 10; i++) {
+                delete [] a[i]; // deletes second dimension of array
+                delete [] a; // deletes first dimension of array
+            }
+
+Back to our discussion of inheritance:
+    Recall that we were previously only concerned with Student's grades.
+    What if we are Needles Hall and want to compute a Student's fees instead? But there are both regular and co-op Students...
+
+    class Student {
+        ...
+        protected:
+        int numCourses;
+        public:
+        virtual int fees(); // allows us to specify the computation based on the type of Student
+    }
+
+    class Regular : public Student {
+        ...
+        public:
+        int fees() {return 700 * numCourses; }
+        ...
+    };
+
+    class Coop : public Student {
+        ...
+        public:
+        int fees() {return 1300*numCourses; }
+    };
+
+
+    Note that the fees method has no implementation in the Student superclass. This incomplete implementation won't compile.
+    What should Student::fees do?
+    Students are either Regular or Coop, there is no other option.
+    Therefore, we DON'T want an implementation.
+    Note: we DO need to specify a virtual method in the superclass in order for polymorphism to work.
+        e.g.
+            Student *students[400];
+            for(...) {
+                students[i]->fees(); // Students superclass needs a virtual fees method.
+            }
+
+    We get this to compile by having a 'pure virtual' method (a method with no implementation).
+        Note: This is a vague definition of pure virtual, but it's all we need to know for now.
+    class Student {
+        ...
+        protected:
+        int numCourses;
+        public:
+        virtual int fees() = 0; // Pure virtual method
+    };
+
+    BUT this means that any class which has at least one pure virtual method CANNOT BE INSTANTIATED. It is abstract.
+        Student s; // Won't work now.
+        Note: The Student.cc file therefore shouldn't exist. But there's an exception to this that we'll get to later. /* Sigh... -JR */
+
+    Any instance of a child class of Student will use dynamic dispatch to determine the most customized implementation of fees.
+        Note: Dynamic dispatch is a common buzzword in interviews. /* Google this later. -JR */
+
+    Any class that inherits from an abstract class is also abstract, unless all inherited pure virtual methods are implemented.
+
+    A class with no pure virtual method is called a 'concrete class'.
+        Every class we've seen so far in the course is a concrete class.
+
+    Uses of abstract classes:
+        - Enable polymorphism
+        - Share common fields
+
+UML Recap:
+    "I'm told that the UML references we've provided are long and tedious." -NN
+    
+    virtual / pure virtual methods are written in <i>italics</i>.
+      If our typography isn't obvious, do "*in italics" or something at the bottom of the page, etc. This is just to help the marker.
+    abstract classes - name in italics
+    static - underline
+        -private +public #protected
+
+    Q: How do you write arrays in UML?
+    A: Just add square brackets (assuming it's variable sized), like :integer []
+       "I need to double check the array notation, I'll let you know if this answer changes." -NN
+
+Up next: 4 design patterns, two of which are 99.99% necessary for your final project.
+
+Observer Pattern
+    We have a "Publish - Subscribe" model.
+    One class is the publisher/Subject and generates data.
+    Another class is the subscriber/Observer and ingests/consumes/uses the generated information.
+
+    e.g.
+        Cells in a spreadsheet: Subject (publisher)
+        Graph/plot of cells: Observer (automatically updates based on changes in observed cells)
+
+    "Whenever the subject changes, it notifies any observers of changes." -NN
+
+    See /observer/ObserverUML.pdf
+        <i>AbstractSubject</i>
+            +attach(Observer *)   "Keep a list of observer to notify."
+            +detach(Observer *)
+            +notifyObservers()
+
+        <i>AbstractObserver</i>
+            <i>+notify()</i>
+
+        ConcreteSubject
+            +getState()  "Specifies the change that just happened. What just happened?"
+
+        ConcreteObserver  "Like a spreadsheet cell."
+            +notify()     "Something happened, but I won't tell you what exactly."
+                          "When the observer is notified, it gets the state of the observer with getState."
+
+        Note: Observer HAS A Subject
+
+    "I will show you a *concrete* example." -NN :P
+
+    Example: Horse Racing
+        publisher/Subject: announces winners
+        subscribers/Observers: betters
+
+        class Subject {
+            Observer *observers[MAX]; // Where MAX is some constant, this is good style.
+            int numObservers;
+            public:
+            bool attach(Observer *o) {...} // better joins (increment numObservers, add to observers)
+            bool detach(Observer *o) {...} // better stops betting (decrement numObservers, remove from observers)
+            void notifyObservers() {
+                for (int i = 0; i < numObservers; i++) {
+                    observers[i]->notify; // notify all observers
+                }
+            }
+            virtual ~Subject() {} // We provide a virtual destructor with no implementation, because there is no dynamic memory.
+                                  // This will do for now, but we will use this to learn something about pure virtual...
+        }
+
+        class Subject {
+            ...
+            virtual ~Subject() = 0; // pure virtual destructor
+                                    // This doesn't work, because subclasses will try to call the parent destructor.
+        }
+
+        If in doubt, make the destructor pure virtual BUT STILL IMPLEMENT THE DESTRUCTOR.
+        This seems contradictory, but what I said before about not needing an implementation is only vaguely true.
+        A subclass will want to call the parent's destructor.
+        Subject::~Subject(){} // This line should exist in implementation (Subject.cc)
+
+        So there is something else to pure virtual methods:
+            A pure virtual method is a method that subclasses must implement to be considered concrete.
+            This is even more complicated because children will attempt to call a parent's destructor, but can't redefine the parent's destructor (same name of "~Subject")
+            So a subclass continues to be abstract if it doesn't implement an inherited pure virtual method EXCEPT if it's the destructor.
+
+        "This pure virtual gotcha is the hardest part of the observer pattern. I will revisit this example next lecture." -NN

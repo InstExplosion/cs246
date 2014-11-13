@@ -1,0 +1,92 @@
+----------------------------------
+Tutorial 8
+
+Recall the benefits of separate compilation. It's more organized, easier to debug, etc.
+    Prevents recompiling of all the things if only one thing changed.
+
+Makefile:
+    main.o: book.h book.cc
+        g++ -c book.cc
+
+    textbook.o: textbook.h textbook.cc book.h
+        g++ -c comic.cc
+    ...
+
+    ^^^^ Whitespace MUST be a tab.
+    "textbook must be recompiled if book changes, etc."
+    make book.o
+    Then on the command line, run make
+    make is a built-in linux file that looks for "Makefile" (or "makefile")
+    make -f otherMakeFileName
+
+
+    ...
+    .PHONY: clean
+
+    clean:
+        rm *.o main
+
+
+    .PHONY says "clean is not a file I want to look at", and lets you run the clean directive.
+
+    Top of Makefile:
+        CXX = g++
+        CXXFLAGS = -Wall -d -c -etc
+
+        main: ...
+            ${CXX} ${CXXFLAGS} main.o book.o textbook.o
+
+
+        ${EXEC} ...
+
+        g++ -c -MMD lists dependencies
+
+    *Use the given makefile given in svn
+    *Know what it looks like for the final exam
+
+Inheritance
+    class Tree {
+        int data;
+    };
+    class BTree : public Tree { // "public inheritance"
+        // data is still private to Tree
+
+    };
+
+    class Tree {
+        protected: // visible to subclasses, gets around getters & setters, not ideal for OOP
+        int data;
+    }
+
+    virtual keyword: subclasses can overwrite this and those new things can be type-specific
+    see phone.cc
+
+    Animal
+        Noise
+        virtualNoise
+
+    Inherits from Animal:
+        Cat
+            virtual
+
+        Dog
+            Noise
+        Fish
+            Noise
+        Fox
+            Virtual
+
+    Inherits from cat:
+        Lion
+
+    Inherits from fish:
+        Whale
+            Virtual
+        Shark
+            Noise
+            Virtual
+
+    "Uses the most recent ancestor's noise/virtualNoise"
+    g++ -DPOINTERS
+        sets up with pointers
+        Animal * pA = ...
