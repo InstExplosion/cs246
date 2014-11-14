@@ -94,8 +94,8 @@ Make was covered in the last tutorial. See the examples if you didn't attend/und
             }
             for (int i = 0; i < 10; i++) {
                 delete [] a[i]; // deletes second dimension of array
-                delete [] a; // deletes first dimension of array
             }
+            delete [] a; // deletes first dimension of array
 
 Back to our discussion of inheritance:
     Recall that we were previously only concerned with Student's grades.
