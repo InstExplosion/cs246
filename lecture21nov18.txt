@@ -1,0 +1,209 @@
+-------------------------------------------------
+Lecture 21
+
+Visitor Pattern, Compilation Dependencies
+
+Recall: Dynamic Dispatch
+    Depends on 2 objects.
+    Add functionality to an existing hierarchy without changing the code in that hierarchy.
+        + No cluttering of code.
+        + Even if no source code for the hierarchy.
+
+    class Book {
+        string title, author;
+        int numPages;
+        public:
+        virtual void accept(BookVisitor &v) {
+            v.visit(*this);
+        }
+    }
+    
+    class TextBook : public Book {
+        ...
+        public:
+        void accept(BookVisitor &v) {
+            v.visit(*this);
+        }
+    }
+
+    class Comic : public Book {
+        ...
+        public:
+        void accept(BookVisitor &v) {
+            v.visit(*this);
+        }
+    }
+
+    Note: These different implementations of accept() are necessary, because *this is a different object within each class.
+        The accept method is overloaded for these multiple types of books.
+
+    class BookVisitor {
+        virtual void visit(Book &b) = 0;
+        virtual void visit(TextBook &t) = 0;
+        virtual void visit(Comic &c) = 0;
+    }
+
+    Track how many of each type of book I have.
+        Book: Count based on author.
+        TextBook: Count based on topic.
+        Comic: Count based on protagonist.
+
+        Use a map where the key is a string and the value is the count.
+            map<string,int>
+
+        class Catalogue : public BookVisitor {
+            map<string,int> myCatalogue;
+            public:
+            map<string,int> getCatalogue() {
+                return myCatalogue;
+            }
+            void visit(Book &b) {
+                myCatalogue[b.getAuthor()]++;
+            }
+        }
+
+        Note: Asking for a key not in the catalogue returns the default of value's data type.
+            In this case, int defaults to 0.
+
+        void visit(TextBook &t) {
+            theCatalogue[t.getTopic()]++;
+        }
+
+        void visit(Comic &c) {
+            theCatalogue[c.getProtagonist()]++;
+        }
+
+        See /se/visitors/ for a full implementation of Book and BookVisitor.
+            broken/
+                book.h: #include "BookVisitor.h"
+                BookVisitor.h: #include "book.h"
+
+                A cyclic dependency has been created, even with include guards.
+                Solution: We need forward declarations.
+                Why? BookVisitor refers to a Book, TextBook, Comic, and the compiler looks for those defeinitions elsewhere.
+                    Forward declarations tell the compiler that there will eventually be a definition, so is won't need to paste in included code.
+
+    What creates a cyclic dependency?
+        In BookVisitor we included book.h only because Book is a parameter in a method.
+        This is overkill.
+        All the compiler needs to know is what is book (same for Comic & TextBook).
+
+        Remove the #include.
+        Place a forward declaration "class Book;"
+        Advantage: reduce compile time (prevents the hard work of the compiler pasting necessary code).
+
+Compilation Dependencies
+    When to forward declare vs when to include (a class).
+    a.h:
+        class A {...};
+
+    b.h:
+        class B : public A {...};
+
+    In b.h, can we just forward-declare A or do we need to #include "a.h"?
+    Here we need to #include, because inheritance relies on the implementation.
+        We need to know the size of A to allocate in memory!
+
+    c.h:
+        class C {
+            A myA;
+        };
+
+    In c.h, we also need to #include "a.h", because C OWNS A A.
+        In order to allocate space for C, we need to know the size of A.
+
+    d.h:
+        class D {
+            A *myA;
+        };
+
+    In d.h, we only need to forward-declare A.
+        The size of D is constant, because it only contains a POINTER to A.
+
+    e.h:
+        class E {
+            A foo(A x);
+        };
+
+    In e.h, the compiler only needs to know that a type A exists somewhere.
+        The implementation is not needed, so a forward declaration will suffice.
+
+    d.cc:
+        void D::bar() {
+            myA->someMethod();
+        }
+
+    In d.cc, the compiler needs to know that A::someMethod exists.
+        We need to #include "a.h".
+        Note: the dependency is between d.cc and a.h, but NOT between d.h and a.h
+
+    Note: Compilation dependencies are thus created when an implementations are included in each other.
+
+    We have always been including <iostream>.
+        This has IO class definitions.
+        We should really just #include <iosfwd>, the iostream forward declarations.
+            This will speed up compile time, because only forward declarations are used.
+            Of course this only works when there are no compilation dependencies for <iostream>.
+
+    If we look at window.h from assignment 4:
+        class XWindow {
+            Display *d;
+            Window w;
+            int s;
+            GC gc; // private
+            public:
+            ...
+        };
+
+    Client code (a .cc file) will include window.h and use the public methods in XWindow.
+    Because of the include, there is a compilation dependency.
+    So if window.h changes, client code must be recompiled,
+        even if the change is to private fields in XWindow.
+
+    To prevent this problem, we use the pImpl idiom (pointer to Implementation).
+        Place the private fields in a separate implementation class.
+        Place a pointer to them in our class.
+
+        struct XWindowImpl { // public by default
+            Display *d;
+            Window w;
+            int s;
+            GC gc;
+        };
+
+        window.h:
+            class XWindowImpl; // same as "struct XWindowImpl;"
+            class XWindowImpl *pImpl;
+                public:
+                ...
+            };
+
+        Note: We can't just forward declare a public method of a class.
+
+        window.cc:
+            #include "window.h"
+            #include "XWindowImpl.h"
+            XWindow::XWindow() : pImpl(new XWindowImpl) {}
+
+        Previously private fields are now accessed through pImpl->d, pImple->w.
+        This forces us to write getters and setters, which is nice and clean.
+
+    In UML form:
+        XWindow
+            HAS A XWindowImpl
+
+    More general:
+        Window
+            HAS A WindowImpl
+        MacWindowImpl : public WindowImpl
+        WinWindowImpl : public WindowImpl
+
+    The Window class has a pointer to a base class, or superclass.
+        class Window {
+            WindowImpl *pImpl;
+            ...
+        };
+
+        pImpl idiom with subclassing to accomodate different/alternate implementation.
+
+        This is the Bridge Pattern.
