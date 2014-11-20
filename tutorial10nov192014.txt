@@ -54,7 +54,7 @@ Another Visitor Example: Rock, Paper, Scissors
     Scissors : Form
 
 Template Pattern
-    
+
     Example: Face
 
     e.g. Game turn calls different parts of a turn sequentially, they can't be manually called out of order.
