@@ -1,0 +1,82 @@
+---------------------------------------------
+Tutorial 10
+
+Visitor Pattern, Template Pattern, Standard Template Library Stuff
+
+Visitor Pattern Example: Tree
+
+    Visitor (abstract)
+        visit(u:unary)
+        visit(l:leaf)
+        visit(b:binary)
+
+    Printer : Visitor
+
+    Counter : Visitor
+
+
+    Tree
+        -data: string
+        +accept(v:Visitor)
+        +getData(): string
+
+    Leaf : Tree
+        +accept(v:Visitor)
+
+    Unary: Tree
+        -child: Tree
+
+    Binary : Tree:
+        -left: Tree
+        -right: tree
+
+
+    Leaf::accept(Visitor &v) {
+        v.visit(*this);
+    }
+
+    int main() {
+        Tree * tp = new Unary("foo", new Binary(... , ...))
+        Counter c;
+        Counter.accept(c)
+    }
+
+Another Visitor Example: Rock, Paper, Scissors
+
+    Form
+        attack(Form *f)
+        defend(Rock &r) // Prints win, lose, or tie
+        defend(Paper &r) // Prints win, lose, or tie
+        defend(Scissors &r) // Prints win, lose, or tie
+
+    Rock : Form
+    Paper : Form
+    Scissors : Form
+
+Template Pattern
+    
+    Example: Face
+
+    e.g. Game turn calls different parts of a turn sequentially, they can't be manually called out of order.
+
+Standard Template Library
+
+    Auto-resizing vector template
+
+Random Number Generation:
+
+    #include <ctime>
+    #include <cstdlib>
+    int generate_int() {
+        return (rand() % 20) + 1; // [1-20]
+    }
+
+Review of Factory
+
+    Factory (abstract)
+        +getEnemy()
+
+    Level0 : Factory
+        +getEnemy()
+
+    etc.

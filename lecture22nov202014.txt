@@ -1,0 +1,272 @@
+-------------------------------------
+Lecture 22
+
+Big 2/3, Casting, Exceptions
+
+Brief Talk on Measuring Design Quality
+    We can't just tell our partner, "This sucks", we have to justify it with formal notions of design.
+    
+    Coupling
+        The degree to which program modules depend on each other.
+        Desired: Low Coupling
+            Modules communicate using an interface (in our case, public methods); not concerned with implementation details.
+
+        Not Desired: High Coupling
+            Modules rely on implementation details (via friendship, public fields, etc.).
+
+    Cohesion
+        How closely are components within a module related.
+        Desired: High Cohesion
+            Components of a module work togther to achieve one task.
+
+        Not desired: Low Cohesion
+            Doing multiple disjoint/unrelated tasks in one module/function.
+            No separation of concerns.
+            e.g. Algorithm header has a collection of unrelated algorithms (this has been fixed in C++11).
+
+Big 2/3
+    Recall: When using inheritance, make destructors for the base classes virtual.
+
+    Copy Constructor (Recall: this constructs a new object as a copy of another.)
+        class Book {
+            ...
+            public:
+            Book(const Book &other);
+            ...
+        };
+
+        class TextBook : public Book {
+            string topic;
+            public:
+            // Suppose we have no copy constructor implemented here.
+        };
+
+        int main() {
+            TextBook t("Algorithms", "CLRS", 500, "CS"); // title, author, numPages, topic
+            TextBook c = t; // Requires a copy constructor - so the default copy constructor will run.
+            // Calls Book::Book(const Book &other)
+            // Then does default field-for-field copy of TextBook fields (string).
+        }
+
+        When an object is constructed that inherits from another object, we first create the "superclass part" of the object.
+        So the default copy constructor will call Book's copy constructor.
+
+        TextBook's default copy contructor looks like this:
+            TextBook::TextBook(const TextBook &other)
+                : Book(other), topic(topic) {}
+
+    Let's look at Book's assigment operator (Recall: this does a field-for-field copy of one object into another existing one.)
+        Book &Book::operator=(const Book &other) {
+            ... // field for field copy
+            return *this;
+        }
+
+        // in main:
+        TextBook b(..., ..., ..., ...);
+        b = t;
+        // Assuming operator= is not implemented for TextBook, the default one runs.
+
+    If we want to mimic TextBook's default operator=:
+        TextBook &TextBook::operator=(const TExtBook &o) {
+            Book::operator=(o);
+            topic = o.topic;
+            return *this;
+        }
+
+        Note: This is an easy example, since no dynamic memory is involved.
+            These are only shallow copies, we aslo need to look into doing deep copies when necessary.
+
+    If fields contain dynamically allocated memory then you need to deallocate previously-allocated memory.
+    Always perform the operation on the superclass first, and then do the operation on the subclass.
+
+    "That wasn't too technical so far. Now we'll get really technical."
+
+    TextBook b1("A", "Nomair", 200, "Physics");
+    TextBook b2("B", "Adam", 300, "CS");
+    // Two Book pointers to TextBooks:
+    Book *pb1 = &b1;
+    Book *pb2 = &b2;
+    // Assigning b2 to b1, but through Book pointers:
+    *pb1 = *pb2; // This will compile. But what happens?
+
+    The compiler will look at the declared type of the left hand side, see a Book *, and call the assignment operator for Book.
+    Book's operator= is executed.
+    Regardless of whether we use our own Book::Operator= or the default, it's only concerned with Book's fields!
+        Assigns Book's fields from b2 to b1.
+    pb1 now points to a (Text)Book which has
+        title = B
+        author = Adam
+        numPages = 300
+        topic = Physics // !!!
+
+        This is called partial assignment, and should be avoided.
+        Solution: Use virtual to prevent partial assignment.
+
+    // But there is a problem with the following code:
+        class Book {
+            ...
+            public:
+            virtual Book &operator=(const Book &other);
+            ...
+        };
+
+        class TextBook : public Book {
+            ...
+            public:
+            TextBook &operator=(const TextBook &other);
+            ...
+        }
+    // The signature of operator= has changed (TextBook argument instead of Book)!
+    // TextBook's operator= is NOT overriding Book's operator=, it's overloading.
+    // We need TextBook's operator= to override the virtual signature.
+
+    // Fixed TextBook class:
+        class TextBook : public Book {
+            ...
+            public:
+            TextBook &operator=(const Book &other); // This is now a valid override.
+            ...
+        };
+
+        But what are the repurcussions of working so hard to implement a copy constructor?
+
+        TextBook c(..., ..., ..., ...);
+        c = Book(..., ..., ...); // !!!
+
+        Here, the compiler will see a TextBook in c, and will call TextBook::operator=
+            But because this copy contructor takes any Book, what is c's topic?
+
+        // Or if we do:
+        Comic cb(..., ..., ..., ...)
+        c = cb; // !!!
+
+        This is called mixed assignment, and should also be avoided.
+
+
+    Non-virtual assignment operator leads to partial assignment (compiler decides which one to call).
+    But if we override operator= to take any Book, we have mixed assignment.
+    How do we avoid both of these?
+        Recommendation: Make the superclass abstract!
+
+        UML:
+            <i>AbstractBook</i> // contains fields that were in Book
+                NormalBook
+                TextBook
+                Comic
+
+        // Note: the following isn't virtual...
+            class AbstractBook {
+                string title, author;
+                int numPages;protected:
+                AbstractBook &operator=(const AbstractBook &ab);
+                public:
+                AbstractBook(...) : ...; // constructor
+                virtual ~AbstractBook();
+            }
+        // We need a pure virtual method. Use the pure virtual destructor method!
+            ...
+            virtual ~abstractBook() = 0;
+            ..
+        // Recall: We must still implement the pure virtual destructor in, say, abstractbook.cc.
+
+        Comics and TextBooks are the same as before, except that they inherit from AbstractBook instead of Book.
+        Note: In the svn repository, NormalBook is called Book and inherits from AbstractBook, don't let this confuse you.
+
+        class NormalBook : public AbstractBook {
+            public:
+            ...
+            NormalBook &operator=(const NormalBook &o) {
+                AbstractBook::operator=(o); // we can do this because it's protected in the superclass.
+                return *this;
+            }
+        }
+
+        Now, operator= is no longer just virtual, so we have prevented mixed assignments.
+        Partial assignment occuring when we assign with superclass pointers,
+            and the compiler calls the superclass operator=, is now prevented.
+            (We still need to remember to implement operator= in the subclasses.)
+        We have dissallowed partial assignment by making operator= protected.
+            Outsiders can no longer call this method.
+
+        TextBook b1(...);
+        TextBook b2(...);
+        AbstractBook *pb1 = &b1;
+        AbstractBook *pb2 = &b2;
+        *pb1 = *pb2; // compiler error
+
+        This is great, because we prefer a compiler error over a hidden partial assignment.
+
+Casting
+
+    Node n;
+    int *ip = (int*)&n; // treat this as an address of an integer
+    C-style casting is very powerful, and will let you cast anything into anything.
+    C++ has broken down the same style of casting, but divided it into 4 types of casts.
+    "You can still shoot yourself in the foot, but you must now think about it." -NN
+
+    4 types of C++ casts: "Four ways to shoot yourself in the foot in C++." -NN
+        1. static_cast
+            These are "sensible casts" that make sense.
+
+            int m = 9;
+            int n = 2;
+            cout << m/n << endl; // prints 4. What if we wanted 4.5?
+            cout << static_cast<double>(m)/n << endl; // prints 4.5
+
+            Book *b = new TextBook(...);
+            When you KNOW that b is a pointer to a TextBook, you can use static_cast.
+            TextBook *t = static_cast<TextBook *>(b);
+            This is an unchecked cast, so you need to know what you are doing.
+                You are telling the compiler 'trust me, I know what I'm doing, this is a TextBook'.
+                If you mess this up and the cast fails, t->getTopic() would return rubbish or some unpredictable, undefined behaviour.
+
+        2. reinterpret_cast
+            "We won't talk about this much, because we shouldn't really need this in our CS career at UW." -NN
+            Cast a given value to ANY type.
+
+            Vec v;
+            Student *s = reinterpret_cast<Student *>(&v);
+
+            These casts are completely compiler-dependent.
+            We could overcome someone's declaration of a private field.
+            We could reinterpret a 1D array as a 2D array, and vice-versa.
+            These are "weird casts" that do really cool, nerdy, low-level things.
+            This is very low-level, and relies on knowing the layout of bits in memory.
+
+        3. const_cast
+            Gives or removes const-ness of a value.
+
+            void g(int *p) {...} // non-const pointer
+            void f(const int *q) {
+                g(q); // compiler error, since non-consts can be sent to consts but not vice-versa
+                g(const_cast<int *>(q)); // compiles!
+            }
+
+            If q is changed by g, we get undefined behaviour. You have shot yourself in the foot.
+            We might want to do this if we have a library function we can't modify, and we're being lazy.
+
+        4. dynamic_cast "The last, most useful type of cast. I truly recommend using this." -NN
+            Allows for type-safe casting (failsafes are in place to prevent you from shooting yourself in the foot).
+            Most useful when using polymorphism.
+
+            vector<Book *> myBooks;
+            ... // put stuff in myBooks
+            Book *b1 = myBooks[5];
+
+            If we are hoping myBooks[5] is a TextBook, we currently rely on properly defined virtual methods.
+            We can't do a static_cast here, because we don't know for sure what myBooks[5] is at compile-time.
+            We want to tentatively cast and see what happens.
+
+            TextBook *t = dynamic_cast<TextBook *>(b1);
+
+            At runtime, this checks to see if b1 is of type TextBook.
+                If the cast succeeds, t is a valid pointer to a TextBook.
+                If it fails, t is NULL.
+            So we can do the following:
+
+            if (t) t->getTopic();
+            else cout << "Not a textbook." << endl;
+
+            Note: This also works with references, but we'll get to that later.
+
+        Note: These are templated functions, and the cast<type>(var) syntax is consistent.
