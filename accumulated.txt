@@ -4998,7 +4998,8 @@ Inheritance
     "Uses the most recent ancestor's noise/virtualNoise"
     g++ -DPOINTERS
         sets up with pointers
-        Animal * pA = ...--------------------------------------
+        Animal * pA = ...
+--------------------------------------
 Tutorial 9
 
 Subject (virtual)
