@@ -1,0 +1,206 @@
+--------------------------------------
+Lecture 23
+
+Casting/Exceptions/Course Evaluations
+
+"Exceptions are definitely on the exam. I just wrote the question!" -NN
+
+Back to our casting discussion:
+    Dynamic Casting Continued
+        dynamic_cast<T *>(expr)
+        
+        vector<Book *> myBooks;
+        Book *b = myBooks[i];
+
+        Dynamic cast tentatively performs the cast.
+        If the cast fails, the pointer is set to NULL (the dynamic cast evaluates to NULL).
+        If it is successful, you get a pointer as desired.
+
+        Comic *c = dynamic_cast<Comic *>(b);
+        if (C) cout << c->getProtag();
+        else cout << "Not a comic!";
+
+        Dynamic cast will let you check the runtime type of an object and let you make decisions.
+        You can only use dynamic_cast if your class hierarchy has at least one virtual method.
+            Classes with at least one virtual method result in its instances having an "extra" pointer
+            to a virtual table (vtable).
+
+            "Vtables are on the cutting board for the final, maybe we'll talk about it in detail on Thursday." -NN
+
+Runtime Type Information (RTTI)
+    Using dynamic_casts to find the runtime type of an object or pointer.
+        e.g.
+            string whatIsIt(Book *b) { // b is not NULL
+                if (dynamic_cast<Comic *>(b)) {
+                    cout << "It's a Comic!";
+                } else if (dynamic_cast<TexttBook *>(b)){
+                    cout << "It's a TextBook!";
+                } else {
+                    cout << "It's a Book!";
+                }
+            }
+
+        What can we say about whatIsIt's design quality?
+            It's terrible.
+            It has high coupling ("Or is that cohesion? No, it's high coupling. That would've lost me a mark on the exam. Hint Hint." -NN).
+            Highly coupled: poor design
+            Brittle: changes to the class hierarchy requires you to search all uses of code relying on RTTI.
+                If we add a CookBook, the whatIsIt function will incorrectly say it's a Book.
+                We should still use dynamic casting, but only in moderation.
+                If we find ourselves using a similar sequence of 'if - else if' statements ALL OVER our code, something is wrong.
+
+            Better design:
+                Use virtual methods.
+                A virtual whatIsIt method in a new CookBook class would simply define whatIsIt to say "It's a CookBook!".
+                This is the visitor design pattern!
+
+Now suppose we have the following code:
+    Book &b = ...;
+    Comic &c = dynamic_cast<Comic &>(b);
+    
+    Note: references are a type, and dynamic_cast takes a type in the angle brackets, so we pass Comic & type to dynamic_cast.
+    If b is a reference to a Comic object, c becomes a reference to the same object.
+    What if b is NOT a reference to a Comic?
+        References cannot be NULL!
+        We need to handle this.
+
+Error Handling
+    In C:
+        Function returns status code, or
+        Sets global error number value (errno).
+        This relies on the programmer to actively check error values.
+        You would have to be very meticulous to check for such errors everywhere.
+
+    In C++, what kind of error conditions can occur?
+        1. Failed dynamic cast to a reference.
+        2. What if new fails (no more memory)?
+        3. What if the range check fails in a vector's at method?
+
+        See exceptions/rangeError.cc:
+            vector<int> v;
+            v.push_back(2);
+            v.push_back(4);
+            v.push_back(6);
+            cout << v.at(3) << endl; // out of range
+            
+            This compiles but when we run it:
+                "terminate called after throwing instance of 'std::out_of_range'"
+                An exception is 'thrown' (or 'raised').
+        exceptions/rangeErrorCaught.cc:
+            ...
+            try {
+                cout << v.at(3) << endl; // out of range
+            }
+            catch (out_of_range r) {
+                cerr << "Bad range " << r.what() << endl;
+            }
+            cout << "Done." << endl;
+
+            Output when executed:
+                Bad range vector::out_of_range
+                Done.
+            This lets us catch an error, deal with it, and move on.
+            Note that we are basically declaring a variable r that becomes the exception.
+
+    When an error occurs, an exception is raised/thrown.
+    The default behaviour of an exception is to terminate the program.
+    To prevent program crashes, we must handle/catch the exception.
+    Note: raise and handle are often used together in terminology, as well as throw and catch.
+        These are synonymous, and are two different ways of saying the same thing.
+
+    See exceptions/callchain.cc
+        void f() {
+            cout << "Start f << endl;
+            throw(out_of_range("f")); // Note: out_of_range("f") is a constructor call.
+            cout << "Finish f" << endl;
+        }
+
+        void g() {
+            cout << "Start g" << endl;
+            f();
+            cout << "Finish g" << endl;
+        }
+        
+        void h() {
+            cout << "Start h" << endl;
+            g();
+            cout << "Finish h" << endl;
+        }
+
+        int main () { 
+            try {
+                h();
+            } catch (out_of_range) {
+                cout << "Range error" << endl;
+            }
+            cout << "Finish main" << endl;
+        }
+
+        Output:
+            Start main
+            Start h
+            Start g
+            Start f
+            Range Error
+            Finish main
+
+        Note: When the error is thrown the call stack is 'unwound', and stack frames are popped off the stack until
+         we find an error handler or until we pop everything. This is an unhandled error, so the program terminates.
+
+        Note: When the program terminates, this puts us at risk of leaking memory! This is the topic for Thursday's lecture.
+
+        When an exception is throw, the call stack begins to unwind, looking for a suitable catch block.
+            If no catch is found, program terminates.
+            If catch is found, the handler executes.
+                The next line/statement of code run AFTER THE CATCH executes.
+
+    Error Recovery can be a multi-stage process,
+        A handler can do part of the recovery and then ask a function lower in the call stack to complete the recovery. 
+            e.g.
+                try {
+                    // exceptional code
+                } catch (SomeErrorType e) {
+                    // partial recovery
+                    throw SomeOtherException(...);
+                }
+
+            Note: The above handler catches all exceptions of type SomeErrorType OR any subclasses of SomeErrorType.
+
+            Alternately, we could throw two different things:
+                OPTION 1: throw;
+                    Throws EXACTLY the same exception object that we just caught
+                OPTION 2: throw e;
+                    Throws an exception necessarily of type SomeErrorType.
+                    Catching a subtype exception object as a supertype object cases slicing.
+                    It catches an object as a base object SomeErrorType.
+                    Some slicing occurs, and the sliced base object is thrown.
+                    This is a very subtle difference from "throw;".
+
+                ADVICE: Use option 1, "throw;".
+
+    All C++ exceptions inherit from a class named "exception".
+        Exceptions don't need to inherit from any base class.
+        So we need a special syntax to catch ALL exceptions.
+        To catch all exceptions, we do this:
+            try {
+                // some code
+            } catch (...) { // THREE LITERAL DOTS, '...', FOR THE FIRST TIME EVER.
+                // some more code
+            }
+        This lets us throw ANYTHING, even base types like integers.
+        See exceptions/
+                recfact.cc // using recursion to calculate a factorial
+                exfact.cc // using exceptions to calulate a factorial
+                    void fact(int n) {
+                        if (n== 0) throw 1;
+                        try: {
+                            ...
+                        }
+                    }
+
+                recfib.cc // similar with fibonacci
+                exfib.cc
+                
+                Lesson: We can even do cool, nerdy calculations with exceptions.
+                    BUT exceptions are practically 1000x slower than using functions.
+                    Exceptions should be exceptional.
