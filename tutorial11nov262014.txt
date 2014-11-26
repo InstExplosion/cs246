@@ -1,0 +1,123 @@
+-------------------------------------
+Tutorial 11
+
+Error Catching
+    Using error flags is bad practice, because they can be ignored.
+        the caller has to manually check for them.
+
+    By raising exceptions, we are being proactive.
+        If something breaks, we can't ignore it. We must fix it.
+
+    e.g.
+        int main() {
+            string s = "Hello";
+            for (int i = 0; i <= s.length(); i++) {
+                cout << s.at(i) << endl;
+            }
+        }
+
+        $>./a.out
+        H
+        e
+        l
+        l
+        o
+        terminate called after throwing an instance of 'std::out_of_range'
+            what: basic_string::at
+        core dumped
+
+    Fixed:
+        int main() {
+            string s = "Hello";
+            try {
+                for (int i = 0; i <= s.length(); i++) {
+                    cout << s.at(i) << endl;
+                }
+            } catch (out_of_range r) {
+                cout << r.what() << endl;
+            }
+        }
+
+    "An error is like a baseball. When we throw one we have to catch it somewhere."
+    "If I throw a baseball at you, you would probably be liek 'WHAT'?"
+        "This is how I remember exception.what().0"
+
+    In C++ you can throw literally anything, including an int, a string, etc.
+    Then we would catch (int r), etc.
+
+    We can use 'catch (...)' to catch anything.
+                       ^^^ Three actual dots. Literally, '...'.
+
+    This implies that there isn't a strict superclass for exceptions that all of these
+    different types inherit from. We are, however, given a few base classes we can use.
+
+    We can create our own exceptions, and even use inheritance.
+        struct myexception { ... }
+        struct otherexception : public myexception { ... }
+
+    But when we do catch (myexception m) { ... },
+    m will behave like myexception, even if we are catching an otherexception.
+    Only the superclass' method is called, and the subclass object is sliced.
+    To fix this, pass by reference?
+
+Casting
+    Recall: const_cast - lets us add/remove 'constness'.
+
+    If we know a Book* contains a TextBook, and we want to call a method
+    specific to TextBook, we can static_cast it to a TextBook*.
+        If it's not a TextBook*, behaviour is undefined.
+
+    dynamic_cast is the most useful, and lets us check for types at runtime.
+
+    We should feel free use the above three casts (const, static, dynamic).
+    But there's one more that we probably shouldn't use that's really fun:
+        reinterpret_cast
+            Casts anything into anything, with no error checking.
+            This is dangerous, but fun.
+        e.g.
+            struct Witch { ... }
+            struct Duck { ... }
+
+            int main() {
+                Witch *w1 = new Witch;
+                Duck *d1 = new Duck;
+                Witch *w2 = new Witch;
+                ...
+                // witch cast into duck, etc.
+                / /see posted example
+            }
+
+See svn for an example that combines casting and error-catching.
+
+RIIA (Resource Acquisition Is Initialization)
+    As errors are thrown through the stack, and the stack is unwound,
+    all of the stack frames are deleted, and memory is being leaked along the way.
+
+    Solution: Instead of using new all over the place, create objects instead of pointers
+    that automatically free memory upon destruction.
+
+Auto-Pointers
+    Delete is called whenever an auto-pointer goes out of scope.
+    "I no longer have to use delete if I use an auto-pointer!"
+    Downfalls:
+        One place in memory can only be pointed to by exactly one auto-pointer.
+        Creating a second auto-pointer? C++ will set the first one to NULL automatically.
+        must #include <memory>
+
+    e.g.
+        auto_ptr<int> ap(new int);
+        *ap = 7;
+        cout << *ap << endl;
+        // ap.get() returns the pointer (address) being stored.
+        // if we create a second identical one, ap.get() returns NULL
+
+    Note: In C++11, we have unique pointers and shared pointers. Yay!
+        Unique acts like our auto_ptr
+        Shared lets deletes memory only after no more shared pointers point to it.
+
+End of course memes!
+    Aragorn: One does not simple learn C++.
+    Real Programmers don't comment their code. If it was hard to write, it should be hard to read.
+        Note: TAs won't really look at our code for the final project.
+    Brace yourselves, C++ questions are coming.
+        "Every time I look at Piazza." -Ten
