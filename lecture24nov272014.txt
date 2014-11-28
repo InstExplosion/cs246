@@ -1,0 +1,259 @@
+---------------------------------------------
+Lecture 24
+
+Exceptions, Exception Safety
+
+Notes:
+Course feedback: (27%) :(
+A5 Due Date: (Midnight Sunday)
+Today's Lecture: Part of final exam (wink wink)
+"I can guaruntee that part of this lecture is on the final." -NN
+
+Exceptions
+    Good Practice: Create your own exception class or use an existing one.
+        e.g.
+            class BadInput {};
+            try {
+                int n;
+                if (!(cin >> n)) throw BadInput(); // BadInput constructor
+            }
+            catch (BadInput &) { ... }
+
+        Note: I snuck a reference into this example.
+        You can catch an exception by reference.
+            You are suppressing the copy of the object.
+            As a stack unwinds, there generally has to be at least one copy
+             of the object when frames are deleted as the stack unwinds.
+            
+            With references:
+            + We prevent a second copy from taking place.
+            + We do not force object coercion.
+            Note: Exception still has to be copied from the stack where it was
+              thrown to the frame where it was caught.
+            Advice: Catch by reference. To rethrow, just 'throw'.
+            Note: If you have a reference to a supertype, you can't catch a
+              reference to a subtype.
+            If a cast to a reference fails, we get a bad_cast exception.
+
+    If new fails (no more memory), we get a bad_alloc exception.
+        "But if we get a bad_alloc, we are probably already doomed.
+         You have run out of heap space!" -NN
+    If vector.at() fails, we get an out_of_range exception.
+
+    Recall the previous lecture's operator= example:
+        Book *p = new Comic(...);
+        Book *q = new Comic(...);
+        *p = *q
+    If Operator= isn't declared virtual, we get partial assignment.
+    If Operator= IS virtual, we get the correct assignment.
+    So we had something like:
+        virtual Comic &operator=(const Book &other) {
+            Comic &co = dynamic_cast<Comic &>(other);
+            title = co.title;
+            author = co.author;
+            ...
+            protag = co.protag;
+            return *this;
+        }
+
+        If dynamic_cast fails above, bad_cast exception is thrown.
+        Someone somewhere has to catch this exception.
+        When we call the assignment operator, we could do:
+            try{ *p = *q; } catch(bad_cast &) cout << "oops";
+        Note: We can't really do try/catch inside the operator=,
+         because we wouldn't be able to recover.
+        Note: dynamic_cast takes care of the const part, too.
+        
+Exception Safety
+    Make sure you review this part too. (wink, wink)
+    
+    void f() {
+        MyClass *p = new MyClass;
+        MYClass q;
+        g();
+    }
+    
+    Does the above leak memory? Yes.
+        p has not been freed. 
+    
+    void f() {
+        MyClass *p = new MyClass;
+        MyClass q;
+        g();
+        delete p;
+    }
+
+    Does it leak memory now? MAYBE.
+    What happens if g throws an exception?
+        delete wouldn't be called!
+        We have a memory leak.
+        Note: q is automatically deleted when out of scope.
+
+    This example is motivation for exception safety.
+
+    Exception Safety: We need to guaruntee that exceptions don't
+     'leave scars'.
+     (At least no leaks/dangling pointers)
+
+    C++ promises that if an exception is thrown and the stack is
+     unwinding, destructors for stack-allocated objects are called
+     as the stack is unwinding.
+    "You are on your own when it comes to dynamic memory. As usual." -NN
+    So q will not leak, but p will leak.
+
+    To make this code exception safe, we do the following:
+        void f() {
+            MyClass *p = new MyClass;
+            MyClass q;
+            try {
+                g();
+            }
+            catch (...) {
+                delete p;
+                throw;
+            }
+            delete p;
+        }
+
+    "This is very ugly and tedious, but I'll teach you a better way." -NN
+    Tedious
+        Java solves this with the 'finally' clause.
+        Scheme has dynamic_wind.
+        C++ has neither.
+            It doesn't need it!
+    The good practice is to allocate objects on the stack.
+        What do we do if we need dynamic memory? We'll see soon.
+
+    Never ever ever let a destructor throw an exception!
+        "Think back to the C++ promise (above)." -NN
+        As we unwind the stack and destructors are called due to an
+         exception, if a destructor raises another, we crash and burn.
+        This would cause two live exceptions.
+        C++ specification says that the program stops immediately at
+         the instruction that raised the second exception.
+        Note: Code will compile with exceptional destructors, but the
+         program will halt if it ever causes two exceptions at once.
+        Note: Empty catch blocks "swallow" the exception. This is a
+         common laziness in Java, and should be avoided.
+
+    This brings us to a C++ idiom: RAII
+        Resource Acquisition Is Initialization
+
+        Every resource should be wrapped in a stack allocated object.
+            e.g.
+                ifstream f("file.txt"); // Recall: this was a midterm question.
+            File is opened (acquired) when f is initialized.
+            We were already using RAII, without knowing it.
+            When f goes out of scope, the istream destructor runs,
+             and releases the resource (the file).
+            Exceptions do not change this at all.
+            If an exception occurs, then during stack unwinding the
+             destructor for ifstream will run.
+                No memory leaks!
+            So, we should treat heap allocated memory as a resource.
+            C++ Standard Template Library privides 'class auto_ptr<T>
+                The constructor takes a pointer to some type T.
+                The destructor deletes the pointer that it stores.
+                Both operator* and operator-> are overloaded.
+                    So we can treat an auto_ptr as if it were just a
+                     normal pointer.
+        See lectures/C++/13-auto_ptr:
+            class Basic { ... };
+            int main() {
+                auto_ptr<Basic> bp(new Basic(5));
+                cout << "Access x through smart pointer: " << bp->x << endl;
+            }
+
+            We don't have to call delete after using new here! Yay!
+
+        So we can rewrite our f function above as the following:
+            f() {
+                auto_pt<MyClass> p(new MyClass);
+                MyClass q;
+                g();
+            }
+
+            This is beautiful. But there is a problem.
+
+        Problem:
+            class C {};
+            auto_ptr<C>(new C);
+            auto_ptr<C> q = p; // q and p point to the same object
+
+        We know that p and q are stack allocated, so when p goes out
+         of scope it will automatically delete the object.
+        If p and q do point to same object, this leads to a double free.
+        So in the above code, C++ says that q "steals" what's inside p,
+         and sets p to NULL.
+        C++3 has auto_ptr.
+        C++11 has uniq_ptr (equivalent to C++3's auto_ptr).
+         as well as shared_ptr, which keeps track of how many
+         pointers point to an object.
+
+    We have 3 levels of Exception Safety:
+        1. Basic guaruntee:
+            If an exception occurs, the program is in a valid state
+             (no memory leaks, no inconsistent or dangling pointers).
+
+        2. Strong guaruntee:
+            What can be called "atomic".
+            If an exception occurs while running a function f, then
+             the state of the program is as if f never ran.
+            Note: Strong guaruntee implies basic guaruntee.
+
+        3. No throw guaruntee:
+            A function f will never throw an exception, it always
+             achieves its purpose.
+
+    A technical example:
+        class A { ... };
+        class B { ... };
+        class C {
+            A a;
+            B b;
+            public:
+            void f() {
+                a.g();
+                b.h();
+            }
+        };
+
+        What guaruntee can f have?
+            If h throws then g has already occured.
+            If g had nonlocal side effects, we don't have a strong
+             guaruntee.
+        
+        Assume g and h have no local side effects.
+        Now, we can achieve a strong guaruntee for f with the following:
+        f() {
+            A atemp = a;
+            B btemp = b;
+
+            atemp.g();
+            btemp.h();
+
+            a = atemp;
+            b = btemp;
+        }
+
+        Almost a strong guaruntee...
+        What if 'b = btemp' throws an exception in the assignment operator?
+        
+        Use the pImpl idiom:
+            "Copy the implementation over and use a pointer."
+            struct CImpl { A a; B b; }
+            class C {
+                auto_ptr<CImpl> pImpl;
+                void f() {
+                    auto_ptr<CImpl> temp(new CImpl (*pImpl));
+                    temp->a.g();
+                    temp->b.h();
+                    std::swap(pImpl, temp);
+            }
+
+            Now we have a strong guaruntee.
+
+"Read the instructions on the exam VERY carefully!" -NN
+"That is it." -NN
+
+*applause*
