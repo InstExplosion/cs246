@@ -1,0 +1,149 @@
+---------------------------------
+Final Exam Review
+(QA with Kirsten)
+
+Copy Constructors and Assignment Operators with Inheritance
+    (Preventing slicing or mixed assignment)
+
+    class Abstract {
+        protected:
+            int field1;
+            int field2;
+            ~Abstract()=0;
+    };
+
+    class Derived : public Abstract {
+        int *field3;
+    }
+
+    Derived (const Derived &d) 
+        : Abstract(d->abstract) {
+
+    }
+
+    Note: Polymorphism works as long as you don't instantiate the superclass.
+        We can't convert one type of Book to, say, a Comic.
+        So make Book virtual and use Book pointers as polymorphic pointers that
+         can represent any of Book's subclasses.
+
+    Abstract *a = new Student; // Student constructor is called, only a pointer is returned.
+        // We don't need a copy constructor implemented for the Abstract class.
+    Note: Abstract a = Student; // Probably isn't valid, because we would end up with a virtual object instance.
+
+Factory Design Pattern
+    UML:
+        Factory
+            Factory1
+                Creates Things
+            Factory2
+
+        Thing (Abstract)
+            Thing1
+                Constructors
+                Destructors
+                etc.
+            Thing2
+
+    Factory1::getThing() {
+        generateNumber(); // Count amount of Things created?
+        if (conditionForThing1) {
+            Thing *t = new Thing1;
+            return t;
+        } else {
+            return new Thing2;
+        }
+    }
+
+    Note: Factory doesn't have an arrow to any Thing in the UML.
+        Factory simply returns a Thing but never OWNS A or HAS A Thing.
+    Note: This lets us have a very simple main file and create various Things
+     with our factory on the fly with a method call.
+    Note: We could combine singleton with factory so that we only
+     have one factory, but this isn't always beneficial.
+
+Foward Declaration
+    All we need to do if we don't need to know the size of an object.
+        e.g.
+            Pointers to a class.
+            Reference to a class.
+        But not
+            Inheriting from a class,
+            or passing an argument by value
+
+Visitor Design Pattern
+    e.g.
+        Note: Slightly tweaked from usual visitor pattern.
+        We have three handler methods each with one argument. /* Need to clarify -JR */
+        The design of this example may require a bunch of methods, but it's easily expandable!
+    UML:
+        Form
+        + attack(Form *) // Could also be references or objects
+        + defend(Rock *)
+        + defend(Paper *)
+        + defend(Scissors *)
+            Rock
+            Paper
+            Scissors
+
+    void Rock::attack(Form *f) {
+        f->defend(this);
+    }
+
+    int main() {
+        Form *me = new Rock;
+        Form *enemy = new Paper;
+        me->attack(enemy);
+    }
+
+    Note: Form *me; // Must be one of our forms.
+        So an array of Form pointers should still dynamically dispatch properly
+
+Bridge and pImpl
+    pImpl
+        I have a bunch of private fields, but we don't really need to see all of them.
+        So let's take all of these private fields and store them in a separate class,
+         a class for the implementation, then store a Pointer to the Implementation (pImpl)
+        So pImpl just uses a private pointer to the implementation.
+        So we don't say "give me Object->x" where x is private.
+            We saw it defined but couldn't access it! Argh!
+        May also require a few getters and setters to manipulate settings inside the Implementation.
+        Note: If we modify the Implementation, we won't have to recompile the superclass,
+         since the superclass only contains a pointer to that Implementation.
+
+    Bridge
+        Storing a pointer to some other class, like in pImpl, but we abstract away multiple implementations
+        e.g.
+            Game
+            - Window *w
+
+            Window
+            + display()
+            + drawRectangle()
+                OSXWin : public Window
+                + display()
+                + drawRectangle()
+                PCWin : public Window
+                + display()
+                + drawRectangle()
+                LinuxWin : public Window
+                + display()
+                + drawRectangle()
+
+            So we can to Game->w->draw() regardless of which implementation the Window pointer was set up with.
+            Note: We should probably say that Game OWNS A Window, so that the Window is deleted when Game is deleted.
+
+        As a result, we have one interface that we can reuse with various implementations!
+
+OWNS A vs HAS A
+    HAS A
+        Doesn't delete the things it has when deleted.
+        e.g.
+            Flood It cells don't need to delete its neighbours when it is deleted,
+             since the Grid handles deletion of all the Cells.
+    OWNS A
+        Deletes objects it owns when it deletes.
+        e.g.
+            Grid OWNS Cells (and deletes them when Grid is being deleted)
+        e.g.
+            A Person OWNS their organs, which disappear after death,
+             but a Person HAS possessions, which can be given away and reused after death.
