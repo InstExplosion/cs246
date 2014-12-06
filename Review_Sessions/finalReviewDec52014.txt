@@ -147,3 +147,123 @@ OWNS A vs HAS A
         e.g.
             A Person OWNS their organs, which disappear after death,
              but a Person HAS possessions, which can be given away and reused after death.
+
+Auto Pointers
+    auto_ptr<int> n = new int(10);
+    auto_ptr<int> m = n; // n is now NULL
+    return m;
+
+    Note: auto_ptr<int> iArray = new int[10]; delete iArray; // Only deletes the first element!
+        (But ints are base types and C++ takes care of those, but only deleting the first elemnt would cause problems for other objects)
+        We don't call 'delete []' on an auto_ptr, only 'delete'!
+        So, we should never make an auto pointer point to an array!
+
+    Left as an exercise:
+        What happens when we do the following:
+            auto_ptr< auto_ptr<int> > n = new int(42);
+
+Template Method
+    class Turtle {
+        virtual void drawShell()=0;
+        virtual void drawFeet();
+        virtual void drawHead();
+        public:
+        void drawTurtle() {
+            drawHead();
+            drawFeet();
+            drawShell();
+        }
+
+    class Blue : public Turtle {
+        virtual void drawShell() {
+            drawSemiCircle("blue");
+        }
+    }
+
+    Note: If we try to implement drawFeet in the Blue class, it will never be called in Turtle::drawTurtle.
+    Note: 'virtual' is not required above in the header 'virtual void drawShell();', it's just a nice sanity check for maintainability.
+    "The template pattern thus works kind of like a wrapper function."
+
+Off on a tangent:
+    We don't need to know this for the exam, this is more to do with mltiple inheritance (which wasn't covered in class).
+
+    class A {
+      protected:
+        int data;
+    }
+
+    class B : public A {
+        string data;
+    }
+
+    B b;
+    b.data; // returns string
+    b.A::data; // returns the int?
+
+Standard Template Library
+    Know what iterators are.
+    Know what end, rend, push_back, etc. do.
+    Know what maps and vectors are.
+
+Partial and Mixed Assignment
+    e.g.
+        Catching aa bad_cast exception as a generic Exception e.
+    e.g.
+        Throwing a Textbook and catching as a Book.
+            Will splice off the TextBook part of the TextBook.
+
+Note: Understand why you need to recompile some things but not others according to dependencies.
+    (This is what a Makefile does)
+    We might want to review Makefiles before the final.
+
+Exception Handling
+
+    Study the three levels of exception safety (RAII).
+    Study how the stack unwinds as exceptions are thrown up the levels.
+        If not caught by main, the program crashes.
+
+    Basic Guaruntee:
+        Code is still in a valid state that we can deal with, but something bad happened if we throw.
+    Strong Guaruntee:
+        Basic + If we throw, everything is in the same state as it was before (atomic).
+    No-Throw Guaruntee:
+        Strong + Basic + Exceptions won't be thrown.
+        The function always succeeds!
+
+    Note: If we throw something and the program is no longer in a valid state, we don't have a name for that.
+        No gurauntee!
+
+    Note: Assignment operator with copy-and-swap should be no-throw guarunteed.
+        Otherwise if we assign all of our memory before changing our object, we have a strong guaruntee.
+    
+    try {
+        ...
+        ___ s;
+        throw s;
+    } catch (int n) {
+
+    } (string s) {
+
+    } catch (TextBook &t) {
+
+    } catch (...) { // catch anything else
+
+    }
+    // other code
+
+    Note: Splicing happens when we catch a TextBook with 'catch (Book b)'.
+    Note: 'throw;' just rethrows whatever we just caught.
+
+Coupling and Cohesion
+    Two classes that are (highly/closely) coupled:
+        Rely on each others' implementations.
+        We want low coupling so that we can easily change things.
+
+    A module with high cohesion:
+        Everything within that module/class/structure has a similar purpose.
+        We want everything related to be in one spot.
+        We want high cohesion
+
+    "Remember: Couples are gross, so we want low coupling."
+
+    /* A pneumonic: (L)ow coup(L)ing, (H)igh co(H)esion -JR */
