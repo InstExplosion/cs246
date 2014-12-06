@@ -51,7 +51,7 @@ Stream abstraction works for other sources of data.
     using namespace std;
 
     int main () {
-        ifstream f("suite.txt"); // here "ifstream" is the type, "f" is the name of the variable (*cough*OBJECT*cough* -JR), and "suite.txt" is the initialization.
+        ifstream f("suite.txt"); // here "ifstream" is the type, "f" is the name of the variable, and "suite.txt" is the initialization.
         string s;
         while (f >> s) {  // while read is successful
             cout << s << endl;
